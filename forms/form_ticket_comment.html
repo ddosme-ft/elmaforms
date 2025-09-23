@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комментарий к обращению</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        button { 
+            background: #2481cc; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            width: 100%;
+        }
+        button:hover { background: #1a6cb3; }
+        .ticket-info { 
+            background: #f5f5f5; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h3>💬 Добавление комментария</h3>
+    
+    <div class="ticket-info" id="ticketInfo">
+        <!-- Информация о тикете будет подставлена динамически -->
+    </div>
+    
+    <form id="commentForm">
+        <div class="form-group">
+            <label for="comment">Ваш комментарий:</label>
+            <textarea id="comment" name="comment" placeholder="Введите ваш комментарий..." required></textarea>
+        </div>
+        
+        <button type="submit">Отправить</button>
+    </form>
+
+    <script>
+        const form = document.getElementById('commentForm');
+        const ticketInfo = document.getElementById('ticketInfo');
+        
+        // Получаем данные из initData
+        const initData = new URLSearchParams(Telegram.WebApp.initData);
+        const ticketData = initData.get('ticket_data');
+        
+        if (ticketData) {
+            const data = JSON.parse(ticketData);
+            ticketInfo.innerHTML = `Обращение №${data.ticket_id}<br>Действие: ${data.action}`;
+        }
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const data = {
+                comment: formData.get('comment'),
+                ticket_data: ticketData
+            };
+            
+            Telegram.WebApp.sendData(JSON.stringify(data));
+            Telegram.WebApp.close();
+        });
+        
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+    </script>
+</body>
+</html>
