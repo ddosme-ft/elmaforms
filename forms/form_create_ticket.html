@@ -1,76 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Создание обращения</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 100%; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h3 { 
+            color: #2481cc; 
+            margin-bottom: 20px; 
+            text-align: center;
+            font-size: 18px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #333;
+            font-size: 14px;
+        }
         input, select, textarea { 
             width: 100%; 
-            padding: 8px; 
+            padding: 12px; 
             border: 1px solid #ddd; 
-            border-radius: 4px; 
-            box-sizing: border-box;
+            border-radius: 8px; 
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
-        textarea { height: 100px; resize: vertical; }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2481cc;
+        }
+        textarea { 
+            height: 120px; 
+            resize: vertical; 
+            font-family: inherit;
+        }
         button { 
             background: #2481cc; 
             color: white; 
             border: none; 
-            padding: 10px 20px; 
-            border-radius: 4px; 
+            padding: 15px; 
+            border-radius: 8px; 
             cursor: pointer; 
             width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
         }
         button:hover { background: #1a6cb3; }
+        button:active { transform: scale(0.98); }
+        .required::after { content: " *"; color: red; }
     </style>
 </head>
 <body>
-    <h3>📋 Создание нового обращения</h3>
-    <form id="ticketForm">
-        <div class="form-group">
-            <label for="appeal_type">Тип обращения:</label>
-            <select id="appeal_type" name="appeal_type" required>
-                <option value="">-- Выберите тип --</option>
-                <option value="INC">Инцидент (INC)</option>
-                <option value="RFF">Запрос (RFF)</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="theme">Тема обращения:</label>
-            <input type="text" id="theme" name="theme" placeholder="Кратко опишите тему" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="description">Описание проблемы:</label>
-            <textarea id="description" name="description" placeholder="Подробно опишите проблему или запрос" required></textarea>
-        </div>
-        
-        <button type="submit">Создать обращение</button>
-    </form>
+    <div class="container">
+        <h3>📋 Создание нового обращения</h3>
+        <form id="ticketForm">
+            <div class="form-group">
+                <label for="appeal_type" class="required">Тип обращения:</label>
+                <select id="appeal_type" name="appeal_type" required>
+                    <option value="">-- Выберите тип --</option>
+                    <option value="INC">Инцидент (INC) - проблема или сбой</option>
+                    <option value="RFF">Запрос (RFF) - новая функциональность</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="theme" class="required">Тема обращения:</label>
+                <input type="text" id="theme" name="theme" placeholder="Кратко опишите тему (максимум 100 символов)" 
+                       maxlength="100" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description" class="required">Описание проблемы:</label>
+                <textarea id="description" name="description" 
+                          placeholder="Подробно опишите проблему или запрос. Укажите шаги воспроизведения, ожидаемый и фактический результат."
+                          maxlength="1000" required></textarea>
+            </div>
+            
+            <button type="submit">✅ Создать обращение</button>
+        </form>
+    </div>
 
     <script>
+        // Инициализация Telegram Web App
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        
         const form = document.getElementById('ticketForm');
+        const themeInput = document.getElementById('theme');
+        const descriptionInput = document.getElementById('description');
+        
+        // Валидация в реальном времени
+        themeInput.addEventListener('input', function() {
+            if (this.value.length > 100) {
+                this.value = this.value.slice(0, 100);
+            }
+        });
+        
+        descriptionInput.addEventListener('input', function() {
+            if (this.value.length > 1000) {
+                this.value = this.value.slice(0, 1000);
+            }
+        });
         
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Показываем индикатор загрузки
+            const button = form.querySelector('button');
+            button.innerHTML = '⏳ Отправка...';
+            button.disabled = true;
+            
             const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
+            const data = {
+                appeal_type: formData.get('appeal_type'),
+                theme: formData.get('theme').trim(),
+                description: formData.get('description').trim()
+            };
+            
+            // Валидация
+            if (!data.appeal_type || !data.theme || !data.description) {
+                alert('Заполните все обязательные поля!');
+                button.innerHTML = '✅ Создать обращение';
+                button.disabled = false;
+                return;
+            }
             
             // Отправляем данные в бота
             Telegram.WebApp.sendData(JSON.stringify(data));
-            Telegram.WebApp.close();
+            
+            // Закрываем Web App через секунду (дает время на отправку)
+            setTimeout(() => {
+                Telegram.WebApp.close();
+            }, 1000);
         });
         
-        // Инициализация WebApp
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
+        // Обработка ошибок
+        Telegram.WebApp.onEvent('viewportChanged', function(e) {
+            console.log('Viewport changed:', e);
+        });
     </script>
 </body>
 </html>
