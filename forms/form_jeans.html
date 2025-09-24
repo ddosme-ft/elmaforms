@@ -85,48 +85,5 @@
             <button type="submit" class="btn">📤 Отправить обращение</button>
         </form>
     </div>
-
-    <script>
-        // Получаем user_id из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user_id');
-        
-        // Устанавливаем логин пользователя (в реальности нужно получить из API)
-        document.querySelector('input[name="tpd_login"]').value = 'Логин пользователя ' + userId;
-
-        // Обработка файлов
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                document.getElementById('fileName').textContent = 'Файл: ' + e.target.files[0].name;
-            }
-        });
-
-        // Отправка формы
-        document.getElementById('jeansForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = {};
-            
-            // Конвертируем FormData в объект
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            
-            // Добавляем информацию о файле
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput.files.length > 0) {
-                data['file_name'] = fileInput.files[0].name;
-                // В реальном приложении здесь нужно загрузить файл на сервер
-                data['attachment_url'] = 'https://example.com/uploads/' + fileInput.files[0].name;
-            }
-            
-            // Отправляем данные в Telegram бот
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.sendData(JSON.stringify(data));
-                Telegram.WebApp.close();
-            }
-        });
-    </script>
 </body>
 </html>
