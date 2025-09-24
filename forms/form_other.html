@@ -15,6 +15,7 @@
         .btn:hover { background: #0056b3; }
         .file-input { display: none; }
         .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .loading { display: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -53,8 +54,89 @@
 
             <input type="hidden" name="form_type" value="Другая проблема">
             
-            <button type="submit" class="btn">📤 Отправить обращение</button>
+            <div class="loading" id="loading">
+                <p>⏳ Отправка обращения...</p>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">📤 Отправить обращение</button>
         </form>
     </div>
+
+    <script>
+        // Аналогичный JavaScript код как в form_jeans.html
+        const urlParams = new URLSearchParams(window.location.search);
+        const userDataParam = urlParams.get('user_data');
+        let userData = {};
+        
+        if (userDataParam) {
+            try {
+                userData = JSON.parse(decodeURIComponent(userDataParam));
+                document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
+        }
+
+        document.getElementById('otherForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            
+            submitBtn.style.display = 'none';
+            loading.style.display = 'block';
+            
+            try {
+                const formData = new FormData(this);
+                formData.append('user_tg_id', userData.user_tg_id || '');
+                formData.append('user_email', userData.user_email || '');
+                formData.append('service', 'SM Jeans Mobile App Supplier');
+                formData.append('appeal_type', 'INC');
+                
+                const response = await fetch('https://ittest.brew4ru.net/api/extensions/091a0cd9-2c50-4769-8136-27b4d092eb08/script/createTicket', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer d551618e-726b-48e7-acac-5b2a53380857'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.text();
+                let ticketId = 'Н/Д';
+                const ticketMatch = result.match(/ticket\s+(\d+)\s+is created/i);
+                if (ticketMatch) {
+                    ticketId = ticketMatch[1];
+                }
+                
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.sendData(JSON.stringify({
+                        ticket_id: ticketId,
+                        form_type: 'Другая проблема',
+                        status: 'success'
+                    }));
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.sendData(JSON.stringify({
+                        ticket_id: null,
+                        form_type: 'Другая проблема',
+                        status: 'error',
+                        error: error.message
+                    }));
+                }
+            }
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const fileNameDiv = document.getElementById('fileName');
+            if (this.files.length > 0) {
+                fileNameDiv.innerHTML = `Выбран файл: ${this.files[0].name}`;
+            } else {
+                fileNameDiv.innerHTML = '';
+            }
+        });
+    </script>
 </body>
 </html>
