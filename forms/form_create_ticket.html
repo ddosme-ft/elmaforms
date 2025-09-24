@@ -1,293 +1,132 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание обращения</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Проблема Jeans</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            padding: 20px; 
-            background: #f5f5f5;
-            min-height: 100vh;
-        }
-        .container { 
-            max-width: 100%; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h3 { 
-            color: #2481cc; 
-            margin-bottom: 20px; 
-            text-align: center;
-            font-size: 18px;
-        }
-        .form-group { margin-bottom: 20px; }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            font-weight: 600; 
-            color: #333;
-            font-size: 14px;
-        }
-        input, select, textarea { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2481cc;
-        }
-        textarea { 
-            height: 120px; 
-            resize: vertical; 
-            font-family: inherit;
-        }
-        .file-upload { 
-            border: 2px dashed #ddd; 
-            padding: 20px; 
-            text-align: center; 
-            border-radius: 8px;
-            cursor: pointer;
-            transition: border-color 0.3s;
-        }
-        .file-upload:hover { border-color: #2481cc; }
-        .file-upload.dragover { border-color: #2481cc; background: #f0f8ff; }
-        .file-list { margin-top: 10px; }
-        .file-item { 
-            background: #f5f5f5; 
-            padding: 8px 12px; 
-            border-radius: 6px; 
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .file-remove { 
-            color: #f44336; 
-            cursor: pointer; 
-            font-weight: bold;
-            padding: 2px 6px;
-        }
-        button { 
-            background: #2481cc; 
-            color: white; 
-            border: none; 
-            padding: 15px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            width: 100%;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        button:hover { background: #1a6cb3; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .required::after { content: " *"; color: red; }
-        .hidden { display: none; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        textarea { height: 80px; resize: vertical; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn:hover { background: #0056b3; }
+        .file-input { display: none; }
+        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>📋 Создание нового обращения</h3>
-        <form id="ticketForm">
+        <h2>📱 Проблема Jeans</h2>
+        
+        <form id="jeansForm">
             <div class="form-group">
-                <label for="appeal_type" class="required">Тип обращения:</label>
-                <select id="appeal_type" name="appeal_type" required>
-                    <option value="">-- Выберите тип --</option>
-                    <option value="INC">Инцидент (INC) - проблема или сбой</option>
-                    <!--<option value="RFF">Запрос (RFF) - новая функциональность</option>-->
+                <label>Описание проблемы *</label>
+                <textarea name="problem_description" required placeholder="Опишите суть проблемы..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Проблема только у вас или массовая? *</label>
+                <select name="problem_scope" required>
+                    <option value="">Выберите вариант</option>
+                    <option value="у меня">Только у меня</option>
+                    <option value="массовая">Массовая проблема</option>
                 </select>
             </div>
+
+            <div class="form-group">
+                <label>Скриншоты или запись экрана</label>
+                <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
+                    📎 Прикрепить файл
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf">
+                <div id="fileName"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Логин ТПД *</label>
+                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин">
+            </div>
+
+            <div class="form-group">
+                <label>ID ТТ, где была обнаружена проблема *</label>
+                <input type="text" name="tt_id" required placeholder="Введите ID торговой точки">
+            </div>
+
+            <div class="form-group">
+                <label>Версия устройства</label>
+                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15">
+            </div>
+
+            <div class="form-group">
+                <label>Версия Jeans/Версия JedAI</label>
+                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1">
+            </div>
+
+            <div class="form-group">
+                <label>Дата и время возникновения проблемы *</label>
+                <input type="datetime-local" name="problem_date" required>
+            </div>
+
+            <div class="form-group">
+                <label>Проблема воспроизводится всегда или только сейчас? *</label>
+                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически">
+            </div>
+
+            <div class="form-group">
+                <label>Подробно опишите шаги для воспроизведения *</label>
+                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
+            </div>
+
+            <input type="hidden" name="form_type" value="Проблема Jeans">
             
-            <div class="form-group">
-                <label for="theme" class="required">Тема обращения:</label>
-                <input type="text" id="theme" name="theme" placeholder="Кратко опишите тему (максимум 100 символов)" 
-                       maxlength="100" required>
-            </div>
-            <div class="form-group">
-                <label for="device" class="required">Устройство:</label>
-                <input type="text" id="device" name="device" placeholder="Укажите устройство" 
-                       maxlength="100" required>
-            </div>
-            <div class="form-group">
-                <label for="login" class="required">Логин:</label>
-                <input type="text" id="login" name="login" placeholder="Укажите логин" 
-                       maxlength="100" required>
-            </div>
-            <div class="form-group">
-                <label for="problem_description" class="required">Описание проблемы:</label>
-                <textarea id="problem_description" name="problem_description" 
-                          placeholder="Подробно опишите проблему или запрос. Укажите шаги воспроизведения, ожидаемый и фактический результат."
-                          maxlength="1000" required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="fileUpload">Прикрепленные файлы:</label>
-                <div class="file-upload" id="fileDropArea">
-                    <div>📎 Нажмите для выбора файлов или перетащите сюда</div>
-                    <input type="file" id="fileInput" multiple class="hidden">
-                </div>
-                <div class="file-list" id="fileList"></div>
-            </div>
-            
-            <button type="submit" id="submitBtn">✅ Создать обращение</button>
+            <button type="submit" class="btn">📤 Отправить обращение</button>
         </form>
     </div>
 
     <script>
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
+        // Получаем user_id из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
         
-        const form = document.getElementById('ticketForm');
-        const fileInput = document.getElementById('fileInput');
-        const fileDropArea = document.getElementById('fileDropArea');
-        const fileList = document.getElementById('fileList');
-        const submitBtn = document.getElementById('submitBtn');
-        
-        let attachedFiles = [];
-        
-        // Обработчики для drag & drop
-        fileDropArea.addEventListener('click', () => fileInput.click());
-        
-        fileDropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileDropArea.classList.add('dragover');
-        });
-        
-        fileDropArea.addEventListener('dragleave', () => {
-            fileDropArea.classList.remove('dragover');
-        });
-        
-        fileDropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileDropArea.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
-        
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
-        
-        function handleFiles(files) {
-            for (let file of files) {
-                // Проверяем размер файла (максимум 10MB)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert(`Файл "${file.name}" слишком большой. Максимальный размер: 10MB`);
-                    continue;
-                }
-                
-                // Добавляем файл в список
-                attachedFiles.push(file);
-                updateFileList();
+        // Устанавливаем логин пользователя (в реальности нужно получить из API)
+        document.querySelector('input[name="tpd_login"]').value = 'Логин пользователя ' + userId;
+
+        // Обработка файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                document.getElementById('fileName').textContent = 'Файл: ' + e.target.files[0].name;
             }
-            fileInput.value = ''; // Сбрасываем input
-        }
-        
-        function updateFileList() {
-            fileList.innerHTML = '';
-            attachedFiles.forEach((file, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.innerHTML = `
-                    <span>📄 ${file.name} (${formatFileSize(file.size)})</span>
-                    <span class="file-remove" onclick="removeFile(${index})">×</span>
-                `;
-                fileList.appendChild(fileItem);
-            });
-        }
-        
-        function removeFile(index) {
-            attachedFiles.splice(index, 1);
-            updateFileList();
-        }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        // Глобальные функции для onclick
-        window.removeFile = removeFile;
-        
-        form.addEventListener('submit', async function(e) {
+        });
+
+        // Отправка формы
+        document.getElementById('jeansForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            submitBtn.innerHTML = '⏳ Отправка...';
-            submitBtn.disabled = true;
+            const formData = new FormData(this);
+            const data = {};
             
-            const formData = new FormData(form);
-            const data = {
-                appeal_type: formData.get('appeal_type'),
-                theme: formData.get('theme').trim(),
-                description: formData.get('description').trim(),
-                files: []
-            };
-            
-            // Валидация
-            if (!data.appeal_type || !data.theme || !data.description) {
-                alert('Заполните все обязательные поля!');
-                submitBtn.innerHTML = '✅ Создать обращение';
-                submitBtn.disabled = false;
-                return;
+            // Конвертируем FormData в объект
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
             }
             
-            // Обрабатываем файлы
-            if (attachedFiles.length > 0) {
-                submitBtn.innerHTML = '⏳ Загрузка файлов...';
-                
-                try {
-                    // Конвертируем файлы в base64 для передачи
-                    for (let file of attachedFiles) {
-                        const base64 = await fileToBase64(file);
-                        data.files.push({
-                            name: file.name,
-                            type: file.type,
-                            size: file.size,
-                            data: base64
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error processing files:', error);
-                    alert('Ошибка при обработке файлов');
-                    submitBtn.innerHTML = '✅ Создать обращение';
-                    submitBtn.disabled = false;
-                    return;
-                }
+            // Добавляем информацию о файле
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length > 0) {
+                data['file_name'] = fileInput.files[0].name;
+                // В реальном приложении здесь нужно загрузить файл на сервер
+                data['attachment_url'] = 'https://example.com/uploads/' + fileInput.files[0].name;
             }
             
-            submitBtn.innerHTML = '⏳ Отправка данных...';
-            
-            // Отправляем данные в бота
-            Telegram.WebApp.sendData(JSON.stringify(data));
-            
-            setTimeout(() => {
+            // Отправляем данные в Telegram бот
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify(data));
                 Telegram.WebApp.close();
-            }, 2000);
+            }
         });
-        
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
     </script>
 </body>
 </html>
-
-
