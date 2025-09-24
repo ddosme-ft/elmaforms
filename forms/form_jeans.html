@@ -100,11 +100,34 @@
         if (userDataParam) {
             try {
                 userData = JSON.parse(decodeURIComponent(userDataParam));
-                // Предзаполняем поле логина
                 document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
             } catch (e) {
                 console.error('Error parsing user data:', e);
             }
+        }
+
+        // Функция для формирования единого описания из всех полей
+        function buildDescription(formData) {
+            const fields = {
+                'Описание проблемы': formData.get('problem_description'),
+                'Область проблемы': formData.get('problem_scope'),
+                'Логин ТПД': formData.get('tpd_login'),
+                'ID ТТ': formData.get('tt_id'),
+                'Версия устройства': formData.get('device_version'),
+                'Версия приложения': formData.get('app_version'),
+                'Дата и время проблемы': formData.get('problem_date'),
+                'Воспроизводимость': formData.get('reproducibility'),
+                'Шаги воспроизведения': formData.get('steps_to_reproduce')
+            };
+
+            let description = '';
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (fieldValue && fieldValue.trim() !== '') {
+                    description += `**${fieldName}:** ${fieldValue}\n\n`;
+                }
+            }
+
+            return description.trim();
         }
 
         // Обработка отправки формы
@@ -120,11 +143,30 @@
             try {
                 const formData = new FormData(this);
                 
-                // Добавляем данные пользователя
-                formData.append('user_tg_id', userData.user_tg_id || '');
-                formData.append('user_email', userData.user_email || '');
-                formData.append('service', 'SM Jeans Mobile App Supplier');
-                formData.append('appeal_type', 'INC');
+                // Формируем единое описание из всех полей
+                const description = buildDescription(formData);
+                
+                // Создаем новый FormData с правильной структурой для API
+                const apiFormData = new FormData();
+                
+                // Обязательные параметры для API
+                apiFormData.append('user_tg_id', userData.user_tg_id || '');
+                apiFormData.append('user_email', userData.user_email || '');
+                apiFormData.append('service', 'SM Jeans Mobile App Supplier');
+                apiFormData.append('appeal_type', 'INC');
+                apiFormData.append('theme', 'Обращение о проблемах в работе приложения Jeans/Jedai'); // Фиксированная тема
+                apiFormData.append('description', description);
+                
+                // Добавляем файл, если есть
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput.files.length > 0) {
+                    apiFormData.append('attachments', fileInput.files[0]);
+                }
+                
+                console.log('Отправляемые данные:');
+                for (let [key, value] of apiFormData.entries()) {
+                    console.log(key + ': ' + (value instanceof File ? value.name : value));
+                }
                 
                 // Отправляем данные на API
                 const response = await fetch('https://ittest.brew4ru.net/api/extensions/091a0cd9-2c50-4769-8136-27b4d092eb08/script/createTicket', {
@@ -132,16 +174,27 @@
                     headers: {
                         'Authorization': 'Bearer d551618e-726b-48e7-acac-5b2a53380857'
                     },
-                    body: formData
+                    body: apiFormData
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.text();
+                console.log('Ответ API:', result);
                 
                 // Парсим номер тикета
                 let ticketId = 'Н/Д';
                 const ticketMatch = result.match(/ticket\s+(\d+)\s+is created/i);
                 if (ticketMatch) {
                     ticketId = ticketMatch[1];
+                } else {
+                    // Альтернативные варианты поиска номера
+                    const numbers = result.match(/\d+/g);
+                    if (numbers && numbers.length > 0) {
+                        ticketId = numbers[0];
+                    }
                 }
                 
                 // Отправляем данные обратно в бот
@@ -149,8 +202,12 @@
                     window.Telegram.WebApp.sendData(JSON.stringify({
                         ticket_id: ticketId,
                         form_type: 'Проблема Jeans',
-                        status: 'success'
+                        status: 'success',
+                        api_response: result
                     }));
+                } else {
+                    // Для тестирования вне Telegram
+                    alert(`Обращение создано! Номер: ${ticketId}\nОтвет API: ${result}`);
                 }
                 
             } catch (error) {
@@ -162,7 +219,12 @@
                         status: 'error',
                         error: error.message
                     }));
+                } else {
+                    alert(`Ошибка: ${error.message}`);
                 }
+            } finally {
+                submitBtn.style.display = 'block';
+                loading.style.display = 'none';
             }
         });
 
