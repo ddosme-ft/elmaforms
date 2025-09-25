@@ -101,6 +101,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         const userDataParam = urlParams.get('user_data');
         let userData = {};
+        if (userDataParam) {
+            try {
+                userData = JSON.parse(decodeURIComponent(userDataParam));
+                document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
+        }
 
 
         // Функция для формирования единого описания из всех полей
