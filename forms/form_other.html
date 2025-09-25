@@ -9,13 +9,14 @@
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         textarea { height: 80px; resize: vertical; }
         .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
         .btn:hover { background: #0056b3; }
         .file-input { display: none; }
         .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
         .loading { display: none; text-align: center; }
+        .required::after { content: " *"; color: red; }
     </style>
 </head>
 <body>
@@ -24,18 +25,51 @@
         
         <form id="otherForm">
             <div class="form-group">
-                <label>Логин ТПД *</label>
-                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин">
+                <label class="required">Тема проблемы *</label>
+                <input type="text" name="problem_theme" required placeholder="Кратко опишите тему проблемы...">
             </div>
 
             <div class="form-group">
-                <label>Дата и время возникновения проблемы *</label>
+                <label class="required">Описание проблемы *</label>
+                <textarea name="problem_description" required placeholder="Подробно опишите суть проблемы..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Тип проблемы *</label>
+                <select name="problem_type" required>
+                    <option value="">Выберите тип проблемы</option>
+                    <option value="техническая">Техническая проблема</option>
+                    <option value="функциональная">Функциональная проблема</option>
+                    <option value="интерфейс">Проблема с интерфейсом</option>
+                    <option value="производительность">Проблема производительности</option>
+                    <option value="другое">Другое</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Система/приложение</label>
+                <input type="text" name="system_name" placeholder="Например: 1C, SAP, внутренний портал">
+            </div>
+
+            <div class="form-group">
+                <label class="required">Дата и время возникновения проблемы *</label>
                 <input type="datetime-local" name="problem_date" required>
             </div>
 
             <div class="form-group">
-                <label>Описание проблемы *</label>
-                <textarea name="problem_description" required placeholder="Опишите суть проблемы..."></textarea>
+                <label>Проблема воспроизводится всегда или только сейчас? *</label>
+                <select name="reproducibility" required>
+                    <option value="">Выберите вариант</option>
+                    <option value="всегда">Всегда</option>
+                    <option value="только сейчас">Только сейчас</option>
+                    <option value="периодически">Периодически</option>
+                    <option value="не воспроизводится">Не воспроизводится</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Подробно опишите шаги для воспроизведения *</label>
+                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
             </div>
 
             <div class="form-group">
@@ -43,13 +77,13 @@
                 <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
                     📎 Прикрепить файл
                 </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf">
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf,.doc,.docx">
                 <div id="fileName"></div>
             </div>
 
             <div class="form-group">
-                <label>Подробно опишите шаги для воспроизведения *</label>
-                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
+                <label>Дополнительная информация</label>
+                <textarea name="additional_info" placeholder="Любая дополнительная информация, которая может помочь..."></textarea>
             </div>
 
             <input type="hidden" name="form_type" value="Другая проблема">
@@ -63,20 +97,36 @@
     </div>
 
     <script>
-        // Аналогичный JavaScript код как в form_jeans.html
+        // Получаем данные пользователя из URL
         const urlParams = new URLSearchParams(window.location.search);
         const userDataParam = urlParams.get('user_data');
         let userData = {};
-        
-        if (userDataParam) {
-            try {
-                userData = JSON.parse(decodeURIComponent(userDataParam));
-                document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
-            } catch (e) {
-                console.error('Error parsing user data:', e);
+
+
+        // Функция для формирования единого описания из всех полей
+        function buildDescription(formData) {
+            const fields = {
+                'Тема проблемы': formData.get('problem_theme'),
+                'Описание проблемы': formData.get('problem_description'),
+                'Тип проблемы': formData.get('problem_type'),
+                'Система/приложение': formData.get('system_name'),
+                'Дата и время проблемы': formData.get('problem_date'),
+                'Воспроизводимость': formData.get('reproducibility'),
+                'Шаги воспроизведения': formData.get('steps_to_reproduce'),
+                'Дополнительная информация': formData.get('additional_info')
+            };
+
+            let description = '**ДРУГАЯ ПРОБЛЕМА**\n\n';
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (fieldValue && fieldValue.trim() !== '') {
+                    description += `**${fieldName}:** ${fieldValue}\n\n`;
+                }
             }
+
+            return description.trim();
         }
 
+        // Обработка отправки формы
         document.getElementById('otherForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -88,32 +138,77 @@
             
             try {
                 const formData = new FormData(this);
-                formData.append('user_tg_id', userData.user_tg_id || '');
-                formData.append('user_email', userData.user_email || '');
-                formData.append('service', 'SM Jeans Mobile App Supplier');
-                formData.append('appeal_type', 'INC');
                 
+                // Формируем единое описание из всех полей
+                const description = buildDescription(formData);
+                
+                // Создаем новый FormData с правильной структурой для API
+                const apiFormData = new FormData();
+                
+                // Обязательные параметры для API
+                apiFormData.append('user_tg_id', userData.user_tg_id || '');
+                apiFormData.append('user_email', userData.user_email || '');
+                apiFormData.append('service', 'SM Jeans Mobile App Supplier');
+                apiFormData.append('appeal_type', 'INC');
+                apiFormData.append('theme', formData.get('problem_theme') || 'Другая проблема');
+                apiFormData.append('description', description);
+                
+                // Добавляем файл, если есть
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput.files.length > 0) {
+                    apiFormData.append('attachments', fileInput.files[0]);
+                }
+                
+                console.log('Отправляемые данные:');
+                for (let [key, value] of apiFormData.entries()) {
+                    console.log(key + ': ' + (value instanceof File ? value.name : value));
+                }
+                
+                // Отправляем данные на API
                 const response = await fetch('https://ittest.brew4ru.net/api/extensions/091a0cd9-2c50-4769-8136-27b4d092eb08/script/createTicket', {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer d551618e-726b-48e7-acac-5b2a53380857'
                     },
-                    body: formData
+                    body: apiFormData
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.text();
+                console.log('Ответ API:', result);
+                
+                // Парсим номер тикета
                 let ticketId = 'Н/Д';
                 const ticketMatch = result.match(/ticket\s+(\d+)\s+is created/i);
                 if (ticketMatch) {
                     ticketId = ticketMatch[1];
+                } else {
+                    // Альтернативные варианты поиска номера
+                    const numbers = result.match(/\d+/g);
+                    if (numbers && numbers.length > 0) {
+                        ticketId = numbers[0];
+                    }
                 }
                 
+                // Отправляем данные обратно в бот
                 if (window.Telegram && window.Telegram.WebApp) {
                     window.Telegram.WebApp.sendData(JSON.stringify({
                         ticket_id: ticketId,
                         form_type: 'Другая проблема',
-                        status: 'success'
+                        status: 'success',
+                        api_response: result,
+                        form_data: {
+                            problem_theme: formData.get('problem_theme'),
+                            problem_type: formData.get('problem_type'),
+                            system_name: formData.get('system_name')
+                        }
                     }));
+                } else {
+                    // Для тестирования вне Telegram
+                    alert(`Обращение создано! Номер: ${ticketId}\nОтвет API: ${result}`);
                 }
                 
             } catch (error) {
@@ -125,10 +220,16 @@
                         status: 'error',
                         error: error.message
                     }));
+                } else {
+                    alert(`Ошибка: ${error.message}`);
                 }
+            } finally {
+                submitBtn.style.display = 'block';
+                loading.style.display = 'none';
             }
         });
 
+        // Обработка файлов
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileNameDiv = document.getElementById('fileName');
             if (this.files.length > 0) {
@@ -137,6 +238,11 @@
                 fileNameDiv.innerHTML = '';
             }
         });
+
+        // Устанавливаем текущую дату и время по умолчанию
+        const now = new Date();
+        const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.querySelector('input[name="problem_date"]').value = localDateTime;
     </script>
 </body>
 </html>
