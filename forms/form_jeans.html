@@ -247,99 +247,118 @@
             }
         });
 
-// Обработчик отправки формы - ИСПРАВЛЕННАЯ ВЕРСИЯ
-document.getElementById('jeansForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const submitBtn = document.getElementById('submitBtn');
-    const loading = document.getElementById('loading');
-    
-    submitBtn.disabled = true;
-    submitBtn.style.display = 'none';
-    loading.style.display = 'block';
-    
-    try {
-        // Собираем данные формы
-        const formDataObject = collectFormData();
-        
-        // Валидация данных
-        const validationErrors = validateFormData(formDataObject);
-        if (validationErrors.length > 0) {
-            displayValidationErrors(validationErrors);
-            throw new Error('Пожалуйста, исправьте ошибки в форме');
-        }
-        
-        // Обработка файла (если есть)
-        const fileInput = document.getElementById('fileInput');
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            validateFileSize(file, 10);
-            formDataObject.attachment = await fileToBase64(file);
-            formDataObject.attachment_name = file.name;
-            formDataObject.attachment_type = file.type;
-            formDataObject.attachment_size = file.size;
-        }
-
-        // ПОДГОТАВЛИВАЕМ ДАННЫЕ ДЛЯ ОТПРАВКИ
-        const sendData = {
-            action: 'create_ticket',
-            form_type: 'jeans',
-            form_data: formDataObject,
-            user_data: userData,
-            timestamp: new Date().toISOString()
-        };
-
-        console.log('Данные для отправки:', sendData);
-        
-        // КОНВЕРТИРУЕМ В JSON СТРОКУ
-        const jsonDataString = JSON.stringify(sendData);
-        console.log('JSON строка:', jsonDataString);
-        
-        // Проверяем парсинг обратно (для отладки)
-        try {
-            const testParse = JSON.parse(jsonDataString);
-            console.log('Тест парсинга OK:', testParse.action);
-        } catch (parseError) {
-            console.error('Ошибка тестового парсинга:', parseError);
-            throw new Error('Ошибка подготовки данных: ' + parseError.message);
-        }
-        
-        // Отправляем данные в бот через Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
-            console.log('Отправка данных через Telegram WebApp...');
+        // Обработчик отправки формы - ИСПРАВЛЕННАЯ ВЕРСИЯ
+        document.getElementById('jeansForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // ВАЖНО: sendData ожидает строку, а не объект!
-            window.Telegram.WebApp.sendData(jsonDataString);
-            console.log('Данные отправлены в Telegram WebApp');
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
             
-            // Закрываем WebApp через 1 секунду
-            setTimeout(() => {
-                if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.close();
+            submitBtn.disabled = true;
+            submitBtn.style.display = 'none';
+            loading.style.display = 'block';
+            
+            try {
+                // Собираем данные формы
+                const formDataObject = collectFormData();
+                
+                // Валидация данных
+                const validationErrors = validateFormData(formDataObject);
+                if (validationErrors.length > 0) {
+                    displayValidationErrors(validationErrors);
+                    throw new Error('Пожалуйста, исправьте ошибки в форме');
                 }
-            }, 1000);
-            
-        } else {
-            // Для тестирования вне Telegram
-            alert('✅ Данные формы готовы к отправке!\n\n' + 
-                  'В реальном режиме они были бы отправлены в бот.\n\n' + 
-                  'JSON данные: ' + jsonDataString);
-            console.log('Тестовые данные (вне Telegram):', sendData);
-        }
-        
-    } catch (error) {
-        console.error('Error:', error);
-        
-        if (error.message !== 'Пожалуйста, исправьте ошибки в форме') {
-            alert(`❌ Ошибка: ${error.message}`);
-        }
-        
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.style.display = 'block';
-        loading.style.display = 'none';
-    }
-});
+                
+                // Обработка файла (если есть) - ПРОПУСТИМ ДЛЯ ТЕСТА
+                const fileInput = document.getElementById('fileInput');
+                let attachmentData = null;
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    validateFileSize(file, 10);
+                    formDataObject.attachment = await fileToBase64(file);
+                    formDataObject.attachment_name = file.name;
+                    formDataObject.attachment_type = file.type;
+                    formDataObject.attachment_size = file.size;
+                    attachmentData = {
+                        has_attachment: true,
+                        name: file.name,
+                        size: file.size
+                    };
+                }
+
+                console.log('✅ Данные формы собраны:', Object.keys(formDataObject));
+                
+                // ПОДГОТАВЛИВАЕМ ДАННЫЕ ДЛЯ ОТПРАВКИ
+                const sendData = {
+                    action: 'create_ticket',
+                    form_type: 'jeans',
+                    form_data: formDataObject,
+                    user_data: userData,
+                    timestamp: new Date().toISOString()
+                };
+
+                // УДАЛЯЕМ ВЛОЖЕНИЕ ИЗ ОСНОВНЫХ ДАННЫХ ДЛЯ ТЕСТА (если есть)
+                if (sendData.form_data.attachment) {
+                    console.log('⚠️ Вложение обнаружено, но временно отключено для теста');
+                    delete sendData.form_data.attachment;
+                    delete sendData.form_data.attachment_name;
+                    delete sendData.form_data.attachment_type;
+                    delete sendData.form_data.attachment_size;
+                }
+
+                console.log('📦 Данные для отправки:', sendData);
+                
+                // КОНВЕРТИРУЕМ В JSON СТРОКУ
+                const jsonDataString = JSON.stringify(sendData);
+                console.log('🔤 JSON строка:', jsonDataString);
+                
+                // Проверяем что это валидный JSON
+                try {
+                    const testParse = JSON.parse(jsonDataString);
+                    console.log('✅ Тест парсинга успешен:', testParse.action);
+                } catch (parseError) {
+                    console.error('❌ Ошибка тестового парсинга:', parseError);
+                    throw new Error('Ошибка подготовки данных: ' + parseError.message);
+                }
+                
+                // ОТПРАВКА ДАННЫХ В TELEGRAM BOT
+                if (window.Telegram && window.Telegram.WebApp) {
+                    console.log('🚀 Отправка данных через Telegram WebApp...');
+                    
+                    // ВАЖНО: sendData ожидает строку!
+                    window.Telegram.WebApp.sendData(jsonDataString);
+                    console.log('✅ Данные отправлены в Telegram WebApp');
+                    
+                    // Даем время на отправку и закрываем
+                    setTimeout(() => {
+                        console.log('🔒 Закрытие WebApp...');
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.close();
+                        }
+                    }, 1500);
+                    
+                } else {
+                    // Режим тестирования вне Telegram
+                    console.log('🧪 Тестовый режим (вне Telegram)');
+                    alert('✅ Данные формы готовы к отправке!\n\n' + 
+                         'В реальном режиме они были бы отправлены в бот.\n\n' + 
+                         'Действие: ' + sendData.action + '\n' +
+                         'Тип формы: ' + sendData.form_type);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                
+                if (error.message !== 'Пожалуйста, исправьте ошибки в форме') {
+                    alert(`❌ Ошибка: ${error.message}`);
+                }
+                
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.style.display = 'block';
+                loading.style.display = 'none';
+            }
+        });
 
         // Дополнительная валидация при вводе (real-time)
         document.querySelectorAll('input, textarea, select').forEach(element => {
@@ -364,23 +383,48 @@ document.getElementById('jeansForm').addEventListener('submit', async function(e
         // Автозаполнение текущей даты и времени
         window.addEventListener('load', function() {
             const now = new Date();
-            // Устанавливаем смещение для локального времени
             const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
                 .toISOString()
                 .slice(0, 16);
             document.querySelector('input[name="problem_date"]').value = localDateTime;
         });
 
-        // Логирование для отладки
-        console.log('Форма инициализирована');
-        console.log('Данные пользователя:', userData);
+        // Логирование инициализации
+        console.log('🎯 Форма инициализирована');
+        console.log('👤 Данные пользователя:', userData);
         if (window.Telegram && window.Telegram.WebApp) {
-            console.log('Telegram WebApp доступен');
+            console.log('📱 Telegram WebApp доступен');
+            console.log('🌐 Версия WebApp:', window.Telegram.WebApp.version);
+            console.log('📏 Платформа:', window.Telegram.WebApp.platform);
         } else {
-            console.log('Тестовый режим (вне Telegram)');
+            console.log('🧪 Тестовый режим (вне Telegram)');
         }
+
+        // Дополнительная диагностика
+        console.log('🔍 Проверка доступности Telegram WebApp методов:');
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log('✅ sendData available:', typeof window.Telegram.WebApp.sendData);
+            console.log('✅ close available:', typeof window.Telegram.WebApp.close);
+            console.log('✅ ready available:', typeof window.Telegram.WebApp.ready);
+        }
+        // АЛЬТЕРНАТИВНЫЙ ВАРИАНТ ОТПРАВКИ
+if (window.Telegram && window.Telegram.WebApp) {
+    console.log('🚀 Альтернативная отправка...');
+    
+    // Простой тест - отправляем минимальные данные
+    const testData = {
+        action: 'test',
+        message: 'Hello from WebApp',
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        window.Telegram.WebApp.sendData(JSON.stringify(testData));
+        console.log('✅ Тестовые данные отправлены');
+    } catch (error) {
+        console.error('❌ Ошибка отправки тестовых данных:', error);
+    }
+}
     </script>
 </body>
 </html>
-
-
