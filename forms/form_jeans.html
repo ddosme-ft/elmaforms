@@ -106,158 +106,35 @@
     </div>
 
 <script>
-    // ДИАГНОСТИКА РЕАЛЬНОЙ ОТПРАВКИ
-    console.log('=== РЕАЛЬНАЯ ДИАГНОСТИКА ОТПРАВКИ ===');
-
-    // Перехватываем вызов sendData для диагностики
-    if (window.Telegram && window.Telegram.WebApp) {
-        const originalSendData = Telegram.WebApp.sendData;
-        
-        Telegram.WebApp.sendData = function(data) {
-            console.log('🔍 sendData called with:');
-            console.log('📊 Data type:', typeof data);
-            console.log('📏 Data length:', data.length);
-            console.log('📄 Data content:', data);
-            console.log('🔤 First 200 chars:', data.substring(0, 200));
-            
-            // Проверяем, является ли data уже объектом
-            if (typeof data === 'object' && !(data instanceof String)) {
-                console.warn('⚠️ WARNING: Data is already an object! Converting to string...');
-                data = JSON.stringify(data);
-                console.log('🔄 Converted to string:', typeof data);
-            }
-            
-            // Проверяем валидность JSON
-            try {
-                JSON.parse(data);
-                console.log('✅ Data is valid JSON');
-            } catch (e) {
-                console.error('❌ Data is NOT valid JSON:', e);
-                console.log('🔧 Attempting to fix...');
-                
-                // Пробуем починить JSON
-                try {
-                    // Если data - это строковое представление объекта
-                    if (data.startsWith('[') || data.startsWith('{')) {
-                        // Уже JSON - странно что не парсится
-                        console.log('🔧 Data looks like JSON but fails parsing');
-                    } else {
-                        // Возможно это строка, содержащая объект
-                        const fixedData = JSON.stringify(data);
-                        console.log('🔧 Fixed data:', fixedData);
-                        data = fixedData;
-                    }
-                } catch (fixError) {
-                    console.error('❌ Cannot fix data:', fixError);
-                }
-            }
-            
-            // Вызываем оригинальный метод
-            console.log('🚀 Calling original sendData...');
-            return originalSendData.call(this, data);
-        };
-        
-        console.log('✅ sendData interceptor installed');
-    }
-
-    // УПРОЩЕННЫЙ ОБРАБОТЧИК ФОРМЫ
+    // АЛЬТЕРНАТИВНОЕ РЕШЕНИЕ: ПЕРЕДАЧА ДАННЫХ ЧЕРЕЗ URL
     document.getElementById('jeansForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        console.log('=== ОТПРАВКА ФОРМЫ ===');
         
-        // Простые тестовые данные
-        const testData = {
-            action: 'create_ticket',
-            form_type: 'jeans',
-            test_id: Math.random().toString(36).substr(2, 9),
-            timestamp: new Date().toISOString(),
-            simple_field: 'test value',
-            number_field: 12345
+        // Собираем данные
+        const formData = {
+            problem_description: document.getElementById('jeansForm').problem_description.value,
+            problem_scope: document.getElementById('jeansForm').problem_scope.value,
+            tpd_login: document.getElementById('jeansForm').tpd_login.value,
+            tt_id: document.getElementById('jeansForm').tt_id.value,
+            timestamp: new Date().toISOString()
         };
         
-        console.log('📦 Test data prepared:', testData);
+        // Кодируем данные для URL
+        const encodedData = encodeURIComponent(JSON.stringify(formData));
+        console.log('🔗 Encoded data for URL:', encodedData);
         
-        // ВАРИАНТ 1: Отправляем как строку (правильно)
-        const jsonString = JSON.stringify(testData);
-        console.log('🔤 JSON string:', jsonString);
-        console.log('🔤 String type:', typeof jsonString);
+        // Создаем URL с данными
+        const returnUrl = `https://t.me/testDistrTeambot?start=formdata_${encodedData}`;
         
-        // ВАРИАНТ 2: Проверяем разные способы отправки
         if (window.Telegram && window.Telegram.WebApp) {
-            console.log('🚀 Attempting to send data...');
-            
-            // Способ 1: Просто строка
-            try {
-                Telegram.WebApp.sendData(jsonString);
-                console.log('✅ Method 1: String sent successfully');
-            } catch (error1) {
-                console.error('❌ Method 1 failed:', error1);
-                
-                // Способ 2: Обернуть в дополнительный JSON
-                try {
-                    const wrappedData = JSON.stringify({data: jsonString});
-                    Telegram.WebApp.sendData(wrappedData);
-                    console.log('✅ Method 2: Wrapped string sent');
-                } catch (error2) {
-                    console.error('❌ Method 2 failed:', error2);
-                    
-                    // Способ 3: Минимальные данные
-                    try {
-                        const minimalData = JSON.stringify({action: 'test'});
-                        Telegram.WebApp.sendData(minimalData);
-                        console.log('✅ Method 3: Minimal data sent');
-                    } catch (error3) {
-                        console.error('❌ Method 3 failed:', error3);
-                    }
-                }
-            }
+            // Закрываем WebApp с возвратом к боту
+            Telegram.WebApp.close();
         } else {
-            console.log('🧪 Test mode - data prepared for sending');
-            alert('Данные готовы:\n' + jsonString);
+            // Показываем ссылку для тестирования
+            alert('Для отправки перейдите по ссылке:\n' + returnUrl);
         }
-    });
-
-    // ТЕСТ РАБОТОСПОСОБНОСТИ WEBAPP
-    function testWebAppConnection() {
-        if (window.Telegram && window.Telegram.WebApp) {
-            console.log('🔌 Testing WebApp connection...');
-            
-            // Проверяем доступные методы
-            console.log('📋 Available WebApp methods:');
-            Object.keys(Telegram.WebApp).forEach(key => {
-                if (typeof Telegram.WebApp[key] === 'function') {
-                    console.log('🔧', key, typeof Telegram.WebApp[key]);
-                }
-            });
-            
-            // Инициализируем WebApp
-            Telegram.WebApp.ready();
-            console.log('✅ WebApp ready called');
-            
-            // Расширяем на весь экран
-            Telegram.WebApp.expand();
-            console.log('✅ WebApp expand called');
-            
-            // Проверяем версию
-            console.log('🌐 WebApp version:', Telegram.WebApp.version);
-            console.log('📱 Platform:', Telegram.WebApp.platform);
-            
-        } else {
-            console.log('❌ Telegram WebApp not available');
-        }
-    }
-
-    // Запускаем тесты при загрузке
-    window.addEventListener('load', function() {
-        testWebAppConnection();
-        
-        // Автозаполнение даты
-        const now = new Date();
-        const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-            .toISOString()
-            .slice(0, 16);
-        document.querySelector('input[name="problem_date"]').value = localDateTime;
     });
 </script>
 </body>
 </html>
+
