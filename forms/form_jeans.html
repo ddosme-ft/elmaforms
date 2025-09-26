@@ -247,7 +247,7 @@
             }
         });
 
-// Обработчик отправки формы - УПРОЩЕННАЯ ВЕРСИЯ
+// Обработчик отправки формы - ИСПРАВЛЕННАЯ ВЕРСИЯ
 document.getElementById('jeansForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -291,13 +291,13 @@ document.getElementById('jeansForm').addEventListener('submit', async function(e
 
         console.log('Данные для отправки:', sendData);
         
-        // Проверяем, что данные являются валидным JSON
-        const jsonData = JSON.stringify(sendData);
-        console.log('JSON данные:', jsonData);
+        // КОНВЕРТИРУЕМ В JSON СТРОКУ
+        const jsonDataString = JSON.stringify(sendData);
+        console.log('JSON строка:', jsonDataString);
         
         // Проверяем парсинг обратно (для отладки)
         try {
-            const testParse = JSON.parse(jsonData);
+            const testParse = JSON.parse(jsonDataString);
             console.log('Тест парсинга OK:', testParse.action);
         } catch (parseError) {
             console.error('Ошибка тестового парсинга:', parseError);
@@ -307,7 +307,9 @@ document.getElementById('jeansForm').addEventListener('submit', async function(e
         // Отправляем данные в бот через Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
             console.log('Отправка данных через Telegram WebApp...');
-            window.Telegram.WebApp.sendData(jsonData);
+            
+            // ВАЖНО: sendData ожидает строку, а не объект!
+            window.Telegram.WebApp.sendData(jsonDataString);
             console.log('Данные отправлены в Telegram WebApp');
             
             // Закрываем WebApp через 1 секунду
@@ -321,7 +323,7 @@ document.getElementById('jeansForm').addEventListener('submit', async function(e
             // Для тестирования вне Telegram
             alert('✅ Данные формы готовы к отправке!\n\n' + 
                   'В реальном режиме они были бы отправлены в бот.\n\n' + 
-                  'JSON данные: ' + jsonData);
+                  'JSON данные: ' + jsonDataString);
             console.log('Тестовые данные (вне Telegram):', sendData);
         }
         
@@ -380,4 +382,5 @@ document.getElementById('jeansForm').addEventListener('submit', async function(e
     </script>
 </body>
 </html>
+
 
