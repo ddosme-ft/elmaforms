@@ -106,227 +106,158 @@
     </div>
 
 <script>
-    // ДИАГНОСТИКА JSON ПРОБЛЕМ
-    console.log('=== НАЧАЛО ДИАГНОСТИКИ ===');
-    
-    // Получаем данные пользователя из URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const userDataParam = urlParams.get('user_data');
-    let userData = {};
-    
-    if (userDataParam) {
-        try {
-            userData = JSON.parse(decodeURIComponent(userDataParam));
-            console.log('✅ userData parsed successfully:', userData);
-        } catch (e) {
-            console.error('❌ userData parse error:', e);
-        }
-    }
+    // ДИАГНОСТИКА РЕАЛЬНОЙ ОТПРАВКИ
+    console.log('=== РЕАЛЬНАЯ ДИАГНОСТИКА ОТПРАВКИ ===');
 
-    // ТЕСТИРУЕМ JSON ФУНКЦИИ
-    function testJSONFunctions() {
-        console.log('=== ТЕСТИРОВАНИЕ JSON ===');
+    // Перехватываем вызов sendData для диагностики
+    if (window.Telegram && window.Telegram.WebApp) {
+        const originalSendData = Telegram.WebApp.sendData;
         
-        const testObject = {
-            action: 'test',
-            form_type: 'jeans',
-            timestamp: new Date().toISOString(),
-            simple: 'test string'
-        };
-        
-        // Тест 1: JSON.stringify
-        try {
-            const jsonString = JSON.stringify(testObject);
-            console.log('✅ JSON.stringify works:', jsonString);
+        Telegram.WebApp.sendData = function(data) {
+            console.log('🔍 sendData called with:');
+            console.log('📊 Data type:', typeof data);
+            console.log('📏 Data length:', data.length);
+            console.log('📄 Data content:', data);
+            console.log('🔤 First 200 chars:', data.substring(0, 200));
             
-            // Тест 2: JSON.parse
-            const parsedBack = JSON.parse(jsonString);
-            console.log('✅ JSON.parse works:', parsedBack.action);
-            
-            // Тест 3: Complex object
-            const complexObject = {
-                ...testObject,
-                nested: { data: 'test' },
-                array: [1, 2, 3]
-            };
-            const complexString = JSON.stringify(complexObject);
-            const complexParsed = JSON.parse(complexString);
-            console.log('✅ Complex JSON works:', complexParsed.nested.data);
-            
-            return true;
-        } catch (e) {
-            console.error('❌ JSON test failed:', e);
-            return false;
-        }
-    }
-    
-    // Запускаем тесты
-    testJSONFunctions();
-
-    // Функция для сбора данных формы
-    function collectFormData() {
-        const form = document.getElementById('jeansForm');
-        if (!form) {
-            console.error('❌ Form not found!');
-            return {};
-        }
-        
-        return {
-            problem_description: form.problem_description?.value || '',
-            problem_scope: form.problem_scope?.value || '',
-            tpd_login: form.tpd_login?.value || '',
-            tt_id: form.tt_id?.value || '',
-            device_version: form.device_version?.value || '',
-            app_version: form.app_version?.value || '',
-            problem_date: form.problem_date?.value || '',
-            reproducibility: form.reproducibility?.value || '',
-            steps_to_reproduce: form.steps_to_reproduce?.value || ''
-        };
-    }
-
-    // УПРОЩЕННЫЙ ОБРАБОТЧИК - ТОЛЬКО ДИАГНОСТИКА
-    document.getElementById('jeansForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        console.log('=== ОБРАБОТКА ФОРМЫ ===');
-        
-        // Собираем данные
-        const formData = collectFormData();
-        console.log('📋 Form data collected:', formData);
-        
-        // Создаем объект для отправки
-        const sendData = {
-            action: 'create_ticket',
-            form_type: 'jeans',
-            form_data: formData,
-            user_data: userData,
-            timestamp: new Date().toISOString(),
-            test_number: 123,
-            test_string: "hello"
-        };
-        
-        console.log('📦 Data object:', sendData);
-        
-        // ТЕСТ 1: Простой JSON
-        try {
-            const simpleTest = { action: 'test', number: 123 };
-            const simpleString = JSON.stringify(simpleTest);
-            console.log('✅ Simple JSON.stringify:', simpleString);
-            
-            const simpleParsed = JSON.parse(simpleString);
-            console.log('✅ Simple JSON.parse:', simpleParsed);
-        } catch (e) {
-            console.error('❌ Simple JSON test failed:', e);
-        }
-        
-        // ТЕСТ 2: Наш объект
-        try {
-            const jsonString1 = JSON.stringify(sendData);
-            console.log('✅ Our JSON.stringify result:', jsonString1);
-            console.log('✅ String type:', typeof jsonString1);
-            console.log('✅ String length:', jsonString1.length);
-            
-            // Проверяем парсинг
-            const parsedBack1 = JSON.parse(jsonString1);
-            console.log('✅ Our JSON.parse works:', parsedBack1.action);
-            
-        } catch (e) {
-            console.error('❌ Our JSON test failed:', e);
-            return;
-        }
-        
-        // ТЕСТ 3: Альтернативные методы сериализации
-        try {
-            // Метод 1: Стандартный
-            const method1 = JSON.stringify(sendData);
-            
-            // Метод 2: С реплейсером
-            const method2 = JSON.stringify(sendData, null, 2);
-            
-            // Метод 3: Без пробелов
-            const method3 = JSON.stringify(sendData, null, 0);
-            
-            console.log('🔤 Method 1 (standard):', method1.substring(0, 100) + '...');
-            console.log('🔤 Method 2 (pretty):', method2.substring(0, 100) + '...');
-            console.log('🔤 Method 3 (compact):', method3.substring(0, 100) + '...');
-            
-            // Проверяем все методы
-            [method1, method2, method3].forEach((method, i) => {
-                try {
-                    JSON.parse(method);
-                    console.log(`✅ Method ${i+1} parseable`);
-                } catch (e) {
-                    console.error(`❌ Method ${i+1} not parseable:`, e);
-                }
-            });
-            
-        } catch (e) {
-            console.error('❌ Alternative methods failed:', e);
-        }
-        
-        // ФИНАЛЬНЫЙ ТЕСТ - то что отправляем в Telegram
-        try {
-            const finalDataString = JSON.stringify(sendData);
-            console.log('🎯 FINAL DATA STRING:', finalDataString);
-            console.log('🎯 FINAL DATA TYPE:', typeof finalDataString);
-            
-            // Проверяем что это валидный JSON
-            const testParse = JSON.parse(finalDataString);
-            console.log('🎯 FINAL TEST PASSED:', testParse.action);
-            
-            // ОТПРАВКА В TELEGRAM
-            if (window.Telegram && window.Telegram.WebApp) {
-                console.log('🚀 Sending to Telegram WebApp...');
-                
-                // ВАРИАНТ 1: Простая строка
-                Telegram.WebApp.sendData(finalDataString);
-                console.log('✅ Data sent to Telegram');
-                
-            } else {
-                console.log('🧪 Test mode - data prepared');
-                alert('Данные готовы к отправке:\n' + finalDataString.substring(0, 200) + '...');
+            // Проверяем, является ли data уже объектом
+            if (typeof data === 'object' && !(data instanceof String)) {
+                console.warn('⚠️ WARNING: Data is already an object! Converting to string...');
+                data = JSON.stringify(data);
+                console.log('🔄 Converted to string:', typeof data);
             }
             
-        } catch (e) {
-            console.error('❌ FINAL TEST FAILED:', e);
-            alert('Ошибка JSON: ' + e.message);
+            // Проверяем валидность JSON
+            try {
+                JSON.parse(data);
+                console.log('✅ Data is valid JSON');
+            } catch (e) {
+                console.error('❌ Data is NOT valid JSON:', e);
+                console.log('🔧 Attempting to fix...');
+                
+                // Пробуем починить JSON
+                try {
+                    // Если data - это строковое представление объекта
+                    if (data.startsWith('[') || data.startsWith('{')) {
+                        // Уже JSON - странно что не парсится
+                        console.log('🔧 Data looks like JSON but fails parsing');
+                    } else {
+                        // Возможно это строка, содержащая объект
+                        const fixedData = JSON.stringify(data);
+                        console.log('🔧 Fixed data:', fixedData);
+                        data = fixedData;
+                    }
+                } catch (fixError) {
+                    console.error('❌ Cannot fix data:', fixError);
+                }
+            }
+            
+            // Вызываем оригинальный метод
+            console.log('🚀 Calling original sendData...');
+            return originalSendData.call(this, data);
+        };
+        
+        console.log('✅ sendData interceptor installed');
+    }
+
+    // УПРОЩЕННЫЙ ОБРАБОТЧИК ФОРМЫ
+    document.getElementById('jeansForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log('=== ОТПРАВКА ФОРМЫ ===');
+        
+        // Простые тестовые данные
+        const testData = {
+            action: 'create_ticket',
+            form_type: 'jeans',
+            test_id: Math.random().toString(36).substr(2, 9),
+            timestamp: new Date().toISOString(),
+            simple_field: 'test value',
+            number_field: 12345
+        };
+        
+        console.log('📦 Test data prepared:', testData);
+        
+        // ВАРИАНТ 1: Отправляем как строку (правильно)
+        const jsonString = JSON.stringify(testData);
+        console.log('🔤 JSON string:', jsonString);
+        console.log('🔤 String type:', typeof jsonString);
+        
+        // ВАРИАНТ 2: Проверяем разные способы отправки
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log('🚀 Attempting to send data...');
+            
+            // Способ 1: Просто строка
+            try {
+                Telegram.WebApp.sendData(jsonString);
+                console.log('✅ Method 1: String sent successfully');
+            } catch (error1) {
+                console.error('❌ Method 1 failed:', error1);
+                
+                // Способ 2: Обернуть в дополнительный JSON
+                try {
+                    const wrappedData = JSON.stringify({data: jsonString});
+                    Telegram.WebApp.sendData(wrappedData);
+                    console.log('✅ Method 2: Wrapped string sent');
+                } catch (error2) {
+                    console.error('❌ Method 2 failed:', error2);
+                    
+                    // Способ 3: Минимальные данные
+                    try {
+                        const minimalData = JSON.stringify({action: 'test'});
+                        Telegram.WebApp.sendData(minimalData);
+                        console.log('✅ Method 3: Minimal data sent');
+                    } catch (error3) {
+                        console.error('❌ Method 3 failed:', error3);
+                    }
+                }
+            }
+        } else {
+            console.log('🧪 Test mode - data prepared for sending');
+            alert('Данные готовы:\n' + jsonString);
         }
     });
 
-    // Дополнительные тесты при загрузке
-    window.addEventListener('load', function() {
-        console.log('=== ДОПОЛНИТЕЛЬНЫЕ ТЕСТЫ ===');
-        
-        // Тест специальных символов
-        const specialTest = {
-            normal: 'test',
-            with_quotes: 'test "quotes"',
-            with_slashes: 'test/slashes',
-            with_unicode: 'test русский текст',
-            with_special: 'test\nnewline\ttab'
-        };
-        
-        try {
-            const specialString = JSON.stringify(specialTest);
-            const specialParsed = JSON.parse(specialString);
-            console.log('✅ Special chars test passed:', specialParsed.with_unicode);
-        } catch (e) {
-            console.error('❌ Special chars test failed:', e);
+    // ТЕСТ РАБОТОСПОСОБНОСТИ WEBAPP
+    function testWebAppConnection() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log('🔌 Testing WebApp connection...');
+            
+            // Проверяем доступные методы
+            console.log('📋 Available WebApp methods:');
+            Object.keys(Telegram.WebApp).forEach(key => {
+                if (typeof Telegram.WebApp[key] === 'function') {
+                    console.log('🔧', key, typeof Telegram.WebApp[key]);
+                }
+            });
+            
+            // Инициализируем WebApp
+            Telegram.WebApp.ready();
+            console.log('✅ WebApp ready called');
+            
+            // Расширяем на весь экран
+            Telegram.WebApp.expand();
+            console.log('✅ WebApp expand called');
+            
+            // Проверяем версию
+            console.log('🌐 WebApp version:', Telegram.WebApp.version);
+            console.log('📱 Platform:', Telegram.WebApp.platform);
+            
+        } else {
+            console.log('❌ Telegram WebApp not available');
         }
+    }
+
+    // Запускаем тесты при загрузке
+    window.addEventListener('load', function() {
+        testWebAppConnection();
         
         // Автозаполнение даты
         const now = new Date();
         const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
             .toISOString()
             .slice(0, 16);
-        const dateInput = document.querySelector('input[name="problem_date"]');
-        if (dateInput) {
-            dateInput.value = localDateTime;
-            console.log('✅ Date auto-filled:', localDateTime);
-        }
+        document.querySelector('input[name="problem_date"]').value = localDateTime;
     });
-
-    console.log('=== ДИАГНОСТИКА ЗАВЕРШЕНА ===');
 </script>
 </body>
 </html>
-
