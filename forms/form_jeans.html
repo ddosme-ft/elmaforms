@@ -105,188 +105,228 @@
         </form>
     </div>
 
-    <script>
-        // Получаем данные пользователя из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const userDataParam = urlParams.get('user_data');
-        let userData = {};
+<script>
+    // ДИАГНОСТИКА JSON ПРОБЛЕМ
+    console.log('=== НАЧАЛО ДИАГНОСТИКИ ===');
+    
+    // Получаем данные пользователя из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const userDataParam = urlParams.get('user_data');
+    let userData = {};
+    
+    if (userDataParam) {
+        try {
+            userData = JSON.parse(decodeURIComponent(userDataParam));
+            console.log('✅ userData parsed successfully:', userData);
+        } catch (e) {
+            console.error('❌ userData parse error:', e);
+        }
+    }
+
+    // ТЕСТИРУЕМ JSON ФУНКЦИИ
+    function testJSONFunctions() {
+        console.log('=== ТЕСТИРОВАНИЕ JSON ===');
         
-        if (userDataParam) {
-            try {
-                userData = JSON.parse(decodeURIComponent(userDataParam));
-                if (userData.tpd_login) {
-                    document.querySelector('input[name="tpd_login"]').value = userData.tpd_login;
+        const testObject = {
+            action: 'test',
+            form_type: 'jeans',
+            timestamp: new Date().toISOString(),
+            simple: 'test string'
+        };
+        
+        // Тест 1: JSON.stringify
+        try {
+            const jsonString = JSON.stringify(testObject);
+            console.log('✅ JSON.stringify works:', jsonString);
+            
+            // Тест 2: JSON.parse
+            const parsedBack = JSON.parse(jsonString);
+            console.log('✅ JSON.parse works:', parsedBack.action);
+            
+            // Тест 3: Complex object
+            const complexObject = {
+                ...testObject,
+                nested: { data: 'test' },
+                array: [1, 2, 3]
+            };
+            const complexString = JSON.stringify(complexObject);
+            const complexParsed = JSON.parse(complexString);
+            console.log('✅ Complex JSON works:', complexParsed.nested.data);
+            
+            return true;
+        } catch (e) {
+            console.error('❌ JSON test failed:', e);
+            return false;
+        }
+    }
+    
+    // Запускаем тесты
+    testJSONFunctions();
+
+    // Функция для сбора данных формы
+    function collectFormData() {
+        const form = document.getElementById('jeansForm');
+        if (!form) {
+            console.error('❌ Form not found!');
+            return {};
+        }
+        
+        return {
+            problem_description: form.problem_description?.value || '',
+            problem_scope: form.problem_scope?.value || '',
+            tpd_login: form.tpd_login?.value || '',
+            tt_id: form.tt_id?.value || '',
+            device_version: form.device_version?.value || '',
+            app_version: form.app_version?.value || '',
+            problem_date: form.problem_date?.value || '',
+            reproducibility: form.reproducibility?.value || '',
+            steps_to_reproduce: form.steps_to_reproduce?.value || ''
+        };
+    }
+
+    // УПРОЩЕННЫЙ ОБРАБОТЧИК - ТОЛЬКО ДИАГНОСТИКА
+    document.getElementById('jeansForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log('=== ОБРАБОТКА ФОРМЫ ===');
+        
+        // Собираем данные
+        const formData = collectFormData();
+        console.log('📋 Form data collected:', formData);
+        
+        // Создаем объект для отправки
+        const sendData = {
+            action: 'create_ticket',
+            form_type: 'jeans',
+            form_data: formData,
+            user_data: userData,
+            timestamp: new Date().toISOString(),
+            test_number: 123,
+            test_string: "hello"
+        };
+        
+        console.log('📦 Data object:', sendData);
+        
+        // ТЕСТ 1: Простой JSON
+        try {
+            const simpleTest = { action: 'test', number: 123 };
+            const simpleString = JSON.stringify(simpleTest);
+            console.log('✅ Simple JSON.stringify:', simpleString);
+            
+            const simpleParsed = JSON.parse(simpleString);
+            console.log('✅ Simple JSON.parse:', simpleParsed);
+        } catch (e) {
+            console.error('❌ Simple JSON test failed:', e);
+        }
+        
+        // ТЕСТ 2: Наш объект
+        try {
+            const jsonString1 = JSON.stringify(sendData);
+            console.log('✅ Our JSON.stringify result:', jsonString1);
+            console.log('✅ String type:', typeof jsonString1);
+            console.log('✅ String length:', jsonString1.length);
+            
+            // Проверяем парсинг
+            const parsedBack1 = JSON.parse(jsonString1);
+            console.log('✅ Our JSON.parse works:', parsedBack1.action);
+            
+        } catch (e) {
+            console.error('❌ Our JSON test failed:', e);
+            return;
+        }
+        
+        // ТЕСТ 3: Альтернативные методы сериализации
+        try {
+            // Метод 1: Стандартный
+            const method1 = JSON.stringify(sendData);
+            
+            // Метод 2: С реплейсером
+            const method2 = JSON.stringify(sendData, null, 2);
+            
+            // Метод 3: Без пробелов
+            const method3 = JSON.stringify(sendData, null, 0);
+            
+            console.log('🔤 Method 1 (standard):', method1.substring(0, 100) + '...');
+            console.log('🔤 Method 2 (pretty):', method2.substring(0, 100) + '...');
+            console.log('🔤 Method 3 (compact):', method3.substring(0, 100) + '...');
+            
+            // Проверяем все методы
+            [method1, method2, method3].forEach((method, i) => {
+                try {
+                    JSON.parse(method);
+                    console.log(`✅ Method ${i+1} parseable`);
+                } catch (e) {
+                    console.error(`❌ Method ${i+1} not parseable:`, e);
                 }
-            } catch (e) {
-                console.error('Error parsing user data:', e);
-            }
+            });
+            
+        } catch (e) {
+            console.error('❌ Alternative methods failed:', e);
         }
-
-        // Функция для сбора данных формы
-        function collectFormData() {
-            const formData = new FormData(document.getElementById('jeansForm'));
+        
+        // ФИНАЛЬНЫЙ ТЕСТ - то что отправляем в Telegram
+        try {
+            const finalDataString = JSON.stringify(sendData);
+            console.log('🎯 FINAL DATA STRING:', finalDataString);
+            console.log('🎯 FINAL DATA TYPE:', typeof finalDataString);
             
-            return {
-                problem_description: formData.get('problem_description') || '',
-                problem_scope: formData.get('problem_scope') || '',
-                tpd_login: formData.get('tpd_login') || '',
-                tt_id: formData.get('tt_id') || '',
-                device_version: formData.get('device_version') || '',
-                app_version: formData.get('app_version') || '',
-                problem_date: formData.get('problem_date') || '',
-                reproducibility: formData.get('reproducibility') || '',
-                steps_to_reproduce: formData.get('steps_to_reproduce') || '',
-                form_type: 'Проблема Jeans'
-            };
-        }
-
-        // Функция для валидации данных формы
-        function validateFormData(formData) {
-            const errors = [];
+            // Проверяем что это валидный JSON
+            const testParse = JSON.parse(finalDataString);
+            console.log('🎯 FINAL TEST PASSED:', testParse.action);
             
-            if (!formData.problem_description || formData.problem_description.trim().length < 10) {
-                errors.push('Описание проблемы должно содержать минимум 10 символов');
-            }
-            
-            if (!formData.problem_scope) {
-                errors.push('Укажите область проблемы');
-            }
-            
-            if (!formData.tpd_login) {
-                errors.push('Укажите логин ТПД');
-            }
-            
-            if (!formData.tt_id) {
-                errors.push('Укажите ID торговой точки');
-            }
-            
-            if (!formData.problem_date) {
-                errors.push('Укажите дату и время проблемы');
-            }
-            
-            if (!formData.reproducibility) {
-                errors.push('Укажите воспроизводимость проблемы');
-            }
-            
-            if (!formData.steps_to_reproduce || formData.steps_to_reproduce.trim().length < 10) {
-                errors.push('Подробно опишите шаги для воспроизведения (минимум 10 символов)');
-            }
-            
-            return errors;
-        }
-
-        // Основной обработчик формы
-        document.getElementById('jeansForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const resultDiv = document.getElementById('result');
-            
-            submitBtn.disabled = true;
-            loading.style.display = 'block';
-            resultDiv.style.display = 'none';
-            
-            // Собираем данные
-            const formData = collectFormData();
-            
-            // Валидация
-            const errors = validateFormData(formData);
-            if (errors.length > 0) {
-                alert('❌ Ошибки в форме:\n\n' + errors.join('\n'));
-                submitBtn.disabled = false;
-                loading.style.display = 'none';
-                return;
-            }
-            
-            // Готовим данные для отправки
-            const requestData = {
-                action: 'create_ticket',
-                form_type: 'jeans',
-                form_data: formData,
-                user_data: userData,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Сохраняем данные в localStorage для передачи в бот
-            const dataKey = 'form_data_' + Date.now();
-            localStorage.setItem(dataKey, JSON.stringify(requestData));
-            
-            // Показываем результат
-            setTimeout(() => {
-                loading.style.display = 'none';
-                resultDiv.style.display = 'block';
-                
-                // Показываем сводку данных
-                document.getElementById('formDataOutput').innerHTML = 
-                    '<strong>Данные для отправки:</strong><br>' +
-                    'Описание: ' + formData.problem_description.substring(0, 50) + '...<br>' +
-                    'ТТ ID: ' + formData.tt_id + '<br>' +
-                    'Логин: ' + formData.tpd_login;
-                
-                // Настраиваем кнопку отправки
-                document.getElementById('sendToBotBtn').onclick = function() {
-                    sendToBot(dataKey, requestData);
-                };
-                
-                submitBtn.disabled = false;
-            }, 1000);
-        });
-
-        // Функция отправки данных боту
-        function sendToBot(dataKey, requestData) {
-            const sendBtn = document.getElementById('sendToBotBtn');
-            sendBtn.disabled = true;
-            sendBtn.textContent = '📤 Отправка...';
-            
+            // ОТПРАВКА В TELEGRAM
             if (window.Telegram && window.Telegram.WebApp) {
-                // Способ 1: Через WebApp с callback данными
-                const callbackData = 'form_submit_' + dataKey;
+                console.log('🚀 Sending to Telegram WebApp...');
                 
-                // Сохраняем данные для бота
-                localStorage.setItem('current_form_data', JSON.stringify(requestData));
-                
-                // Отправляем callback данные
-                Telegram.WebApp.sendData(JSON.stringify({
-                    type: 'form_submission',
-                    form_key: dataKey
-                }));
-                
-                setTimeout(() => {
-                    sendBtn.textContent = '✅ Отправлено!';
-                    setTimeout(() => {
-                        Telegram.WebApp.close();
-                    }, 1000);
-                }, 500);
+                // ВАРИАНТ 1: Простая строка
+                Telegram.WebApp.sendData(finalDataString);
+                console.log('✅ Data sent to Telegram');
                 
             } else {
-                // Способ 2: Для тестирования - показываем данные
-                document.getElementById('formDataOutput').style.display = 'block';
-                sendBtn.textContent = '✅ Готово (тест)';
-                
-                alert('В реальном Telegram данные были бы отправлены боту.\n\nКлюч: ' + dataKey);
+                console.log('🧪 Test mode - data prepared');
+                alert('Данные готовы к отправке:\n' + finalDataString.substring(0, 200) + '...');
             }
+            
+        } catch (e) {
+            console.error('❌ FINAL TEST FAILED:', e);
+            alert('Ошибка JSON: ' + e.message);
         }
+    });
 
-        // Функция закрытия формы
-        function closeForm() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                Telegram.WebApp.close();
-            } else {
-                alert('Форма закрыта');
-            }
+    // Дополнительные тесты при загрузке
+    window.addEventListener('load', function() {
+        console.log('=== ДОПОЛНИТЕЛЬНЫЕ ТЕСТЫ ===');
+        
+        // Тест специальных символов
+        const specialTest = {
+            normal: 'test',
+            with_quotes: 'test "quotes"',
+            with_slashes: 'test/slashes',
+            with_unicode: 'test русский текст',
+            with_special: 'test\nnewline\ttab'
+        };
+        
+        try {
+            const specialString = JSON.stringify(specialTest);
+            const specialParsed = JSON.parse(specialString);
+            console.log('✅ Special chars test passed:', specialParsed.with_unicode);
+        } catch (e) {
+            console.error('❌ Special chars test failed:', e);
         }
+        
+        // Автозаполнение даты
+        const now = new Date();
+        const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+        const dateInput = document.querySelector('input[name="problem_date"]');
+        if (dateInput) {
+            dateInput.value = localDateTime;
+            console.log('✅ Date auto-filled:', localDateTime);
+        }
+    });
 
-        // Автозаполнение текущей даты и времени
-        window.addEventListener('load', function() {
-            const now = new Date();
-            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-                .toISOString()
-                .slice(0, 16);
-            document.querySelector('input[name="problem_date"]').value = localDateTime;
-        });
-
-        console.log('🎯 Форма готова к работе');
-    </script>
+    console.log('=== ДИАГНОСТИКА ЗАВЕРШЕНА ===');
+</script>
 </body>
 </html>
+
