@@ -11,16 +11,18 @@
         label { display: block; margin-bottom: 5px; font-weight: bold; }
         input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         textarea { height: 80px; resize: vertical; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin: 5px 0; }
         .btn:hover { background: #0056b3; }
         .btn:disabled { background: #cccccc; cursor: not-allowed; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
         .file-input { display: none; }
-        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
-        .file-btn:hover { background: #218838; }
+        .file-btn { background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
         .loading { display: none; text-align: center; padding: 20px; }
         .error { color: #dc3545; font-size: 14px; margin-top: 5px; }
         .success { color: #28a745; font-size: 14px; margin-top: 5px; }
         .file-info { margin-top: 5px; font-size: 14px; }
+        .result { display: none; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -28,7 +30,7 @@
         <h2>📱 Проблема Jeans</h2>
         
         <form id="jeansForm">
-            <!-- Поля формы остаются без изменений -->
+            <!-- Все поля формы остаются -->
             <div class="form-group">
                 <label>Описание проблемы *</label>
                 <textarea name="problem_description" required placeholder="Опишите суть проблемы..."></textarea>
@@ -43,15 +45,6 @@
                     <option value="массовая">Массовая проблема</option>
                 </select>
                 <div class="error" id="error-problem_scope"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Скриншоты или запись экрана</label>
-                <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
-                    📎 Прикрепить файл (макс. 10MB)
-                </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf,.doc,.docx">
-                <div class="file-info" id="fileName"></div>
             </div>
 
             <div class="form-group">
@@ -97,11 +90,18 @@
             <input type="hidden" name="form_type" value="Проблема Jeans">
             
             <div class="loading" id="loading">
-                <p>⏳ Отправка обращения...</p>
-                <p style="font-size: 14px; color: #666;">Пожалуйста, не закрывайте окно</p>
+                <p>⏳ Подготовка данных...</p>
             </div>
             
-            <button type="submit" class="btn" id="submitBtn">📤 Отправить обращение</button>
+            <div class="result" id="result">
+                <h3>✅ Данные формы готовы!</h3>
+                <p>Нажмите кнопку ниже чтобы отправить обращение в бот</p>
+                <button type="button" class="btn btn-success" id="sendToBotBtn">📤 Отправить боту</button>
+                <div id="formDataOutput" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px; display: none;"></div>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">📝 Подготовить данные</button>
+            <button type="button" class="btn" onclick="closeForm()" style="background: #6c757d;">❌ Закрыть форму</button>
         </form>
     </div>
 
@@ -122,88 +122,6 @@
             }
         }
 
-        // Инициализация Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-            console.log('✅ Telegram WebApp инициализирован');
-        }
-
-        // Функция для конвертации файла в base64
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => {
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        // Функция для валидации размера файла
-        function validateFileSize(file, maxSizeMB = 10) {
-            const maxSizeBytes = maxSizeMB * 1024 * 1024;
-            if (file.size > maxSizeBytes) {
-                throw new Error(`Размер файла превышает ${maxSizeMB}MB`);
-            }
-            return true;
-        }
-
-        // Функция для валидации данных формы
-        function validateFormData(formData) {
-            const errors = [];
-            
-            if (!formData.problem_description || formData.problem_description.trim().length < 10) {
-                errors.push({ field: 'problem_description', message: 'Описание проблемы должно содержать минимум 10 символов' });
-            }
-            
-            if (!formData.problem_scope) {
-                errors.push({ field: 'problem_scope', message: 'Укажите область проблемы' });
-            }
-            
-            if (!formData.tpd_login || formData.tpd_login.trim().length === 0) {
-                errors.push({ field: 'tpd_login', message: 'Укажите логин ТПД' });
-            }
-            
-            if (!formData.tt_id || formData.tt_id.trim().length === 0) {
-                errors.push({ field: 'tt_id', message: 'Укажите ID торговой точки' });
-            }
-            
-            if (!formData.problem_date) {
-                errors.push({ field: 'problem_date', message: 'Укажите дату и время проблемы' });
-            }
-            
-            if (!formData.reproducibility || formData.reproducibility.trim().length === 0) {
-                errors.push({ field: 'reproducibility', message: 'Укажите воспроизводимость проблемы' });
-            }
-            
-            if (!formData.steps_to_reproduce || formData.steps_to_reproduce.trim().length < 10) {
-                errors.push({ field: 'steps_to_reproduce', message: 'Подробно опишите шаги для воспроизведения (минимум 10 символов)' });
-            }
-            
-            return errors;
-        }
-
-        // Функция для отображения ошибок валидации
-        function displayValidationErrors(errors) {
-            document.querySelectorAll('.error').forEach(el => {
-                el.textContent = '';
-                el.style.display = 'none';
-            });
-            
-            if (errors.length === 0) return;
-            
-            errors.forEach(error => {
-                const errorElement = document.getElementById(`error-${error.field}`);
-                if (errorElement) {
-                    errorElement.textContent = error.message;
-                    errorElement.style.display = 'block';
-                }
-            });
-        }
-
         // Функция для сбора данных формы
         function collectFormData() {
             const formData = new FormData(document.getElementById('jeansForm'));
@@ -222,115 +140,142 @@
             };
         }
 
-        // Обработчик изменения файла
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const fileNameDiv = document.getElementById('fileName');
+        // Функция для валидации данных формы
+        function validateFormData(formData) {
+            const errors = [];
             
-            if (this.files.length > 0) {
-                const file = this.files[0];
-                
-                try {
-                    validateFileSize(file, 10);
-                    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
-                    fileNameDiv.innerHTML = `✅ Выбран файл: ${file.name} (${fileSizeMB} MB)`;
-                    fileNameDiv.className = 'file-info success';
-                } catch (error) {
-                    fileNameDiv.innerHTML = `❌ ${error.message}`;
-                    fileNameDiv.className = 'file-info error';
-                    this.value = '';
-                }
-            } else {
-                fileNameDiv.innerHTML = '';
-                fileNameDiv.className = 'file-info';
+            if (!formData.problem_description || formData.problem_description.trim().length < 10) {
+                errors.push('Описание проблемы должно содержать минимум 10 символов');
             }
-        });
+            
+            if (!formData.problem_scope) {
+                errors.push('Укажите область проблемы');
+            }
+            
+            if (!formData.tpd_login) {
+                errors.push('Укажите логин ТПД');
+            }
+            
+            if (!formData.tt_id) {
+                errors.push('Укажите ID торговой точки');
+            }
+            
+            if (!formData.problem_date) {
+                errors.push('Укажите дату и время проблемы');
+            }
+            
+            if (!formData.reproducibility) {
+                errors.push('Укажите воспроизводимость проблемы');
+            }
+            
+            if (!formData.steps_to_reproduce || formData.steps_to_reproduce.trim().length < 10) {
+                errors.push('Подробно опишите шаги для воспроизведения (минимум 10 символов)');
+            }
+            
+            return errors;
+        }
 
-        // ГЛАВНЫЙ ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ОТПРАВКИ
-        document.getElementById('jeansForm').addEventListener('submit', async function(e) {
+        // Основной обработчик формы
+        document.getElementById('jeansForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
             
             submitBtn.disabled = true;
             loading.style.display = 'block';
+            resultDiv.style.display = 'none';
             
-            try {
-                // Собираем данные формы
-                const formDataObject = collectFormData();
-                
-                // Валидация данных
-                const validationErrors = validateFormData(formDataObject);
-                if (validationErrors.length > 0) {
-                    displayValidationErrors(validationErrors);
-                    throw new Error('Пожалуйста, исправьте ошибки в форме');
-                }
-                
-                console.log('✅ Данные формы собраны');
-
-                // ПОДГОТАВЛИВАЕМ ДАННЫЕ В ПРАВИЛЬНОМ ФОРМАТЕ ДЛЯ TELEGRAM
-                const messageData = {
-                    action: 'create_ticket',
-                    form_type: 'jeans',
-                    form_data: formDataObject,
-                    user_data: userData,
-                    timestamp: new Date().toISOString()
-                };
-
-                // КОНВЕРТИРУЕМ В JSON СТРОКУ
-                const jsonDataString = JSON.stringify(messageData);
-                console.log('📤 Отправляемые данные:', jsonDataString);
-
-                // ОТПРАВКА ДАННЫХ ЧЕРЕЗ TELEGRAM WEBAPP
-                if (window.Telegram && window.Telegram.WebApp) {
-                    console.log('🚀 Отправка через Telegram WebApp...');
-                    
-                    // ВАЖНО: Правильный вызов sendData
-                    Telegram.WebApp.sendData(jsonDataString);
-                    
-                    console.log('✅ Данные отправлены, закрываем WebApp через 2 секунды...');
-                    
-                    // Закрываем WebApp после успешной отправки
-                    setTimeout(() => {
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            Telegram.WebApp.close();
-                        }
-                    }, 2000);
-                    
-                } else {
-                    // Режим тестирования
-                    console.log('🧪 Тестовый режим - данные подготовлены:', messageData);
-                    alert('✅ Данные подготовлены для отправки!\n\nВ реальном Telegram обращение было бы создано.');
-                }
-                
-            } catch (error) {
-                console.error('❌ Ошибка:', error);
-                alert(`❌ Ошибка: ${error.message}`);
-            } finally {
+            // Собираем данные
+            const formData = collectFormData();
+            
+            // Валидация
+            const errors = validateFormData(formData);
+            if (errors.length > 0) {
+                alert('❌ Ошибки в форме:\n\n' + errors.join('\n'));
                 submitBtn.disabled = false;
                 loading.style.display = 'none';
+                return;
             }
+            
+            // Готовим данные для отправки
+            const requestData = {
+                action: 'create_ticket',
+                form_type: 'jeans',
+                form_data: formData,
+                user_data: userData,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Сохраняем данные в localStorage для передачи в бот
+            const dataKey = 'form_data_' + Date.now();
+            localStorage.setItem(dataKey, JSON.stringify(requestData));
+            
+            // Показываем результат
+            setTimeout(() => {
+                loading.style.display = 'none';
+                resultDiv.style.display = 'block';
+                
+                // Показываем сводку данных
+                document.getElementById('formDataOutput').innerHTML = 
+                    '<strong>Данные для отправки:</strong><br>' +
+                    'Описание: ' + formData.problem_description.substring(0, 50) + '...<br>' +
+                    'ТТ ID: ' + formData.tt_id + '<br>' +
+                    'Логин: ' + formData.tpd_login;
+                
+                // Настраиваем кнопку отправки
+                document.getElementById('sendToBotBtn').onclick = function() {
+                    sendToBot(dataKey, requestData);
+                };
+                
+                submitBtn.disabled = false;
+            }, 1000);
         });
 
-        // Дополнительная валидация при вводе
-        document.querySelectorAll('input, textarea, select').forEach(element => {
-            element.addEventListener('blur', function() {
-                const formData = collectFormData();
-                const errors = validateFormData(formData);
-                const fieldErrors = errors.filter(error => error.field === this.name);
+        // Функция отправки данных боту
+        function sendToBot(dataKey, requestData) {
+            const sendBtn = document.getElementById('sendToBotBtn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = '📤 Отправка...';
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                // Способ 1: Через WebApp с callback данными
+                const callbackData = 'form_submit_' + dataKey;
                 
-                const errorElement = document.getElementById(`error-${this.name}`);
-                if (errorElement) {
-                    if (fieldErrors.length > 0) {
-                        errorElement.textContent = fieldErrors[0].message;
-                        errorElement.style.display = 'block';
-                    } else {
-                        errorElement.textContent = '';
-                        errorElement.style.display = 'none';
-                    }
-                }
-            });
-        });
+                // Сохраняем данные для бота
+                localStorage.setItem('current_form_data', JSON.stringify(requestData));
+                
+                // Отправляем callback данные
+                Telegram.WebApp.sendData(JSON.stringify({
+                    type: 'form_submission',
+                    form_key: dataKey
+                }));
+                
+                setTimeout(() => {
+                    sendBtn.textContent = '✅ Отправлено!';
+                    setTimeout(() => {
+                        Telegram.WebApp.close();
+                    }, 1000);
+                }, 500);
+                
+            } else {
+                // Способ 2: Для тестирования - показываем данные
+                document.getElementById('formDataOutput').style.display = 'block';
+                sendBtn.textContent = '✅ Готово (тест)';
+                
+                alert('В реальном Telegram данные были бы отправлены боту.\n\nКлюч: ' + dataKey);
+            }
+        }
+
+        // Функция закрытия формы
+        function closeForm() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                Telegram.WebApp.close();
+            } else {
+                alert('Форма закрыта');
+            }
+        }
 
         // Автозаполнение текущей даты и времени
         window.addEventListener('load', function() {
