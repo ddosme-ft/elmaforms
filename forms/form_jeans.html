@@ -14,9 +14,7 @@
         textarea { height: 80px; resize: vertical; }
         .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
         .btn:hover { background: #0056b3; }
-        .file-input { display: none; }
-        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
-        .loading { display: none; text-align: center; }
+        .required::after { content: " *"; color: red; }
     </style>
 </head>
 <body>
@@ -25,12 +23,12 @@
         
         <form id="jeansForm">
             <div class="form-group">
-                <label>Описание проблемы *</label>
+                <label class="required">Описание проблемы</label>
                 <textarea name="problem_description" required placeholder="Опишите суть проблемы..."></textarea>
             </div>
 
             <div class="form-group">
-                <label>Проблема только у вас или массовая? *</label>
+                <label class="required">Проблема только у вас или массовая?</label>
                 <select name="problem_scope" required>
                     <option value="">Выберите вариант</option>
                     <option value="у меня">Только у меня</option>
@@ -39,168 +37,64 @@
             </div>
 
             <div class="form-group">
-                <label>Скриншоты или запись экрана</label>
-                <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
-                    📎 Прикрепить файл
-                </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf">
-                <div id="fileName"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Логин ТПД *</label>
+                <label class="required">Логин ТПД</label>
                 <input type="text" name="tpd_login" required value="" placeholder="Ваш логин">
             </div>
 
             <div class="form-group">
-                <label>ID ТТ, где была обнаружена проблема *</label>
+                <label class="required">ID ТТ, где была обнаружена проблема</label>
                 <input type="text" name="tt_id" required placeholder="Введите ID торговой точки">
             </div>
 
-            <div class="form-group">
-                <label>Версия устройства</label>
-                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15">
-            </div>
-
-            <div class="form-group">
-                <label>Версия Jeans/Версия JedAI</label>
-                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1">
-            </div>
-
-            <div class="form-group">
-                <label>Дата и время возникновения проблемы *</label>
-                <input type="datetime-local" name="problem_date" required>
-            </div>
-
-            <div class="form-group">
-                <label>Проблема воспроизводится всегда или только сейчас? *</label>
-                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически">
-            </div>
-
-            <div class="form-group">
-                <label>Подробно опишите шаги для воспроизведения *</label>
-                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
-            </div>
-
-            <input type="hidden" name="form_type" value="Проблема Jeans">
-            
-            <div class="loading" id="loading">
-                <p>⏳ Отправка обращения...</p>
-            </div>
-            
             <button type="submit" class="btn" id="submitBtn">📤 Отправить обращение</button>
         </form>
     </div>
 
     <script>
-        // Получаем данные пользователя из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const userDataParam = urlParams.get('user_data');
-        let userData = {};
+        // Инициализация WebApp как в test_form.html
+        Telegram.WebApp.ready();
         
-        if (userDataParam) {
-            try {
-                userData = JSON.parse(decodeURIComponent(userDataParam));
-                document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
-            } catch (e) {
-                console.error('Error parsing user data:', e);
-            }
-        }
-
-        // Функция для формирования единого описания из всех полей
+        // Функция для формирования описания
         function buildDescription(formData) {
-            const fields = {
-                'Описание проблемы': formData.get('problem_description'),
-                'Область проблемы': formData.get('problem_scope'),
-                'Логин ТПД': formData.get('tpd_login'),
-                'ID ТТ': formData.get('tt_id'),
-                'Версия устройства': formData.get('device_version'),
-                'Версия приложения': formData.get('app_version'),
-                'Дата и время проблемы': formData.get('problem_date'),
-                'Воспроизводимость': formData.get('reproducibility'),
-                'Шаги воспроизведения': formData.get('steps_to_reproduce')
-            };
+            return `ПРОБЛЕМА JEANS
 
-            let description = '';
-            for (const [fieldName, fieldValue] of Object.entries(fields)) {
-                if (fieldValue && fieldValue.trim() !== '') {
-                    description += `**${fieldName}:** ${fieldValue}\n\n`;
-                }
-            }
-
-            return description.trim();
+Описание проблемы: ${formData.get('problem_description')}
+Область проблемы: ${formData.get('problem_scope')}
+Логин ТПД: ${formData.get('tpd_login')}
+ID ТТ: ${formData.get('tt_id')}`;
         }
 
-        // Обработка отправки формы - изменено 27.09 18:12
-document.getElementById('jeansForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const submitBtn = document.getElementById('submitBtn');
-    const loading = document.getElementById('loading');
-    
-    submitBtn.style.display = 'none';
-    loading.style.display = 'block';
-    
-    try {
-        const formData = new FormData(this);
-        
-        // Формируем единое описание из всех полей
-        const description = buildDescription(formData);
-        
-        // Собираем все данные формы
-        const formDataObject = {
-            form_type: 'Проблема Jeans',
-            description: description,
-            form_data: {
+        // Обработка отправки формы - простой вариант как в test_form.html
+        document.getElementById('jeansForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const description = buildDescription(formData);
+            
+            // Подготавливаем данные для отправки как в test_form.html
+            const data = {
+                form_type: "Проблема Jeans",
+                description: description,
                 problem_description: formData.get('problem_description'),
                 problem_scope: formData.get('problem_scope'),
                 tpd_login: formData.get('tpd_login'),
-                tt_id: formData.get('tt_id'),
-                device_version: formData.get('device_version'),
-                app_version: formData.get('app_version'),
-                problem_date: formData.get('problem_date'),
-                reproducibility: formData.get('reproducibility'),
-                steps_to_reproduce: formData.get('steps_to_reproduce')
-            }
-        };
-        
-        console.log('Данные формы:', formDataObject);
-        
-        // Отправляем данные обратно в бот через Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.sendData(JSON.stringify(formDataObject));
-        } else {
-            // Для тестирования вне Telegram
-            alert('Данные формы готовы к отправке! В Telegram они были бы отправлены боту.');
-            console.log('Данные для отправки:', formDataObject);
-        }
-        
-    } catch (error) {
-        console.error('Error:', error);
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.sendData(JSON.stringify({
-                form_type: 'Проблема Jeans',
-                status: 'error',
-                error: error.message
-            }));
-        } else {
-            alert(`Ошибка: ${error.message}`);
-        }
-    } finally {
-        submitBtn.style.display = 'block';
-        loading.style.display = 'none';
-    }
-});
-
-        // Обработка файлов
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const fileNameDiv = document.getElementById('fileName');
-            if (this.files.length > 0) {
-                fileNameDiv.innerHTML = `Выбран файл: ${this.files[0].name}`;
-            } else {
-                fileNameDiv.innerHTML = '';
-            }
+                tt_id: formData.get('tt_id')
+            };
+            
+            console.log('Отправляемые данные:', data);
+            
+            // Настраиваем кнопку и отправляем данные как в test_form.html
+            Telegram.WebApp.MainButton.setText('Отправить обращение').show().onClick(function() {
+                Telegram.WebApp.sendData(JSON.stringify(data));
+                Telegram.WebApp.close();
+            });
+            
+            // Симулируем клик по кнопке отправки
+            Telegram.WebApp.MainButton.click();
         });
+
+        // Автоматически расширяем WebApp как в test_form.html
+        Telegram.WebApp.expand();
     </script>
 </body>
 </html>
