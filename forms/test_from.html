@@ -32,6 +32,8 @@
             sendTestData();
         });
         Telegram.WebApp.MainButton.show();
+        console.log('Telegram WebApp available:', !!window.Telegram?.WebApp);
+        console.log('WebApp version:', Telegram.WebApp.version);
     </script>
 </body>
 </html>
