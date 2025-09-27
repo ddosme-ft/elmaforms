@@ -91,7 +91,7 @@
             <button type="submit" class="btn" id="submitBtn">📤 Отправить обращение</button>
         </form>
     </div>
-
+<script>
 // Получаем данные пользователя из URL
 const urlParams = new URLSearchParams(window.location.search);
 const userDataParam = urlParams.get('user_data');
@@ -333,5 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     document.querySelector('input[name="problem_date"]').value = localDateTime;
 });
+    </script>
 </body>
 </html>
+
