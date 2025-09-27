@@ -6,23 +6,22 @@
     <title>Проблема Jeans</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-        .container { max-width: 100%; margin: 0; background: white; padding: 20px; min-height: 100vh; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         textarea { height: 80px; resize: vertical; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn:hover { background: #0056b3; }
         .file-input { display: none; }
-        .file-btn { background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; width: 100%; text-align: center; }
-        .file-btn:hover { background: #218838; }
-        .loading { display: none; text-align: center; padding: 20px; }
-        .error { color: red; margin-top: 5px; }
-        #fileName { margin-top: 5px; font-size: 14px; }
+        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .loading { display: none; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align: center; margin-bottom: 20px;">📱 Проблема Jeans</h2>
+        <h2>📱 Проблема Jeans</h2>
         
         <form id="jeansForm">
             <div class="form-group">
@@ -86,8 +85,10 @@
             <input type="hidden" name="form_type" value="Проблема Jeans">
             
             <div class="loading" id="loading">
-                <p>⏳ Отправка данных в бота...</p>
+                <p>⏳ Отправка обращения...</p>
             </div>
+            
+            <button type="submit" class="btn" id="submitBtn">📤 Отправить обращение</button>
         </form>
     </div>
 
@@ -106,239 +107,100 @@
             }
         }
 
-        let TelegramWebApp = null;
-        let isFormValid = false;
+        // Функция для формирования единого описания из всех полей
+        function buildDescription(formData) {
+            const fields = {
+                'Описание проблемы': formData.get('problem_description'),
+                'Область проблемы': formData.get('problem_scope'),
+                'Логин ТПД': formData.get('tpd_login'),
+                'ID ТТ': formData.get('tt_id'),
+                'Версия устройства': formData.get('device_version'),
+                'Версия приложения': formData.get('app_version'),
+                'Дата и время проблемы': formData.get('problem_date'),
+                'Воспроизводимость': formData.get('reproducibility'),
+                'Шаги воспроизведения': formData.get('steps_to_reproduce')
+            };
 
-        // Инициализация Telegram WebApp
+            let description = '';
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (fieldValue && fieldValue.trim() !== '') {
+                    description += `**${fieldName}:** ${fieldValue}\n\n`;
+                }
+            }
+
+            return description.trim();
+        }
+
+        // Обработка отправки формы - изменено 27.09 18:12
+document.getElementById('jeansForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loading');
+    
+    submitBtn.style.display = 'none';
+    loading.style.display = 'block';
+    
+    try {
+        const formData = new FormData(this);
+        
+        // Формируем единое описание из всех полей
+        const description = buildDescription(formData);
+        
+        // Собираем все данные формы
+        const formDataObject = {
+            form_type: 'Проблема Jeans',
+            description: description,
+            form_data: {
+                problem_description: formData.get('problem_description'),
+                problem_scope: formData.get('problem_scope'),
+                tpd_login: formData.get('tpd_login'),
+                tt_id: formData.get('tt_id'),
+                device_version: formData.get('device_version'),
+                app_version: formData.get('app_version'),
+                problem_date: formData.get('problem_date'),
+                reproducibility: formData.get('reproducibility'),
+                steps_to_reproduce: formData.get('steps_to_reproduce')
+            }
+        };
+        
+        console.log('Данные формы:', formDataObject);
+        
+        // Отправляем данные обратно в бот через Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
-            TelegramWebApp = window.Telegram.WebApp;
-            console.log('WebApp инициализирован');
-            console.log('User data:', userData);
-            
-            TelegramWebApp.ready();
-            TelegramWebApp.expand();
-            
-            // Настраиваем основную кнопку
-            TelegramWebApp.MainButton.setText("📤 ОТПРАВИТЬ ОБРАЩЕНИЕ");
-            TelegramWebApp.MainButton.show();
-            TelegramWebApp.MainButton.disable();
-            
-            // Обработчик нажатия на основную кнопку
-            TelegramWebApp.MainButton.onClick(handleMainButtonClick);
+            window.Telegram.WebApp.sendData(JSON.stringify(formDataObject));
+        } else {
+            // Для тестирования вне Telegram
+            alert('Данные формы готовы к отправке! В Telegram они были бы отправлены боту.');
+            console.log('Данные для отправки:', formDataObject);
         }
-
-        // Функция для преобразования FormData в объект
-        function formDataToObject(formData) {
-            const object = {};
-            for (let [key, value] of formData.entries()) {
-                object[key] = value;
-            }
-            return object;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.sendData(JSON.stringify({
+                form_type: 'Проблема Jeans',
+                status: 'error',
+                error: error.message
+            }));
+        } else {
+            alert(`Ошибка: ${error.message}`);
         }
-
-        // Функция для чтения файла как base64
-        function readFileAsBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64 = e.target.result.split(',')[1];
-                    resolve({
-                        data: base64,
-                        name: file.name,
-                        type: file.type,
-                        size: file.size
-                    });
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Валидация формы
-        function validateForm() {
-            const form = document.getElementById('jeansForm');
-            const requiredFields = [
-                'problem_description',
-                'problem_scope', 
-                'tpd_login',
-                'tt_id',
-                'problem_date',
-                'reproducibility',
-                'steps_to_reproduce'
-            ];
-
-            for (const fieldName of requiredFields) {
-                const field = form.querySelector(`[name="${fieldName}"]`);
-                if (!field.value || field.value.trim() === '') {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        // Обновление состояния кнопки при изменении формы
-        function setupFormValidation() {
-            const form = document.getElementById('jeansForm');
-            const inputs = form.querySelectorAll('input, select, textarea');
-            
-            inputs.forEach(input => {
-                input.addEventListener('input', () => {
-                    isFormValid = validateForm();
-                    
-                    if (TelegramWebApp) {
-                        if (isFormValid) {
-                            TelegramWebApp.MainButton.enable();
-                            TelegramWebApp.MainButton.setParams({
-                                color: '#007bff',
-                                text_color: '#ffffff'
-                            });
-                        } else {
-                            TelegramWebApp.MainButton.disable();
-                        }
-                    }
-                });
-            });
-        }
-
-        // Обработка нажатия основной кнопки
-        async function handleMainButtonClick() {
-            if (!isFormValid) return;
-            
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
-            
-            if (TelegramWebApp) {
-                TelegramWebApp.MainButton.showProgress();
-                TelegramWebApp.MainButton.disable();
-            }
-            
-            try {
-                const form = document.getElementById('jeansForm');
-                const formData = new FormData(form);
-                const fileInput = document.getElementById('fileInput');
-                
-                console.log('Начало обработки формы');
-                
-                // Преобразуем FormData в объект
-                const formDataObject = formDataToObject(formData);
-                
-                // Обрабатываем файл, если есть
-                let fileData = null;
-                if (fileInput.files.length > 0) {
-                    console.log('Обработка файла...');
-                    fileData = await readFileAsBase64(fileInput.files[0]);
-                    console.log('Файл обработан:', fileData.name);
-                }
-                
-                // Формируем данные для отправки в бота
-                const webAppData = {
-                    action: 'create_ticket',
-                    form_type: 'jeans',
-                    form_data: formDataObject,
-                    user_data: userData,
-                    timestamp: new Date().toISOString()
-                };
-                
-                // Добавляем данные файла, если есть
-                if (fileData) {
-                    webAppData.file_data = fileData;
-                }
-                
-                console.log('Данные для отправки в бота:', webAppData);
-                
-                // Отправляем данные обратно в бота
-                if (TelegramWebApp) {
-                    console.log('Отправка данных в Telegram WebApp...');
-                    
-                    // Даем время на отправку данных перед закрытием
-                    TelegramWebApp.sendData(JSON.stringify(webAppData));
-                    
-                    // Ждем немного перед закрытием
-                    setTimeout(() => {
-                        console.log('Закрытие WebApp');
-                        TelegramWebApp.close();
-                    }, 500);
-                    
-                } else {
-                    // Для тестирования вне Telegram
-                    console.log('Тестовый режим - данные для бота:', webAppData);
-                    alert('✅ Данные формы готовы к отправке!');
-                }
-                
-            } catch (error) {
-                console.error('Ошибка:', error);
-                
-                // Показываем ошибку
-                loading.innerHTML = `<p style="color: red;">❌ Ошибка: ${error.message}</p>`;
-                
-                // Восстанавливаем кнопку
-                if (TelegramWebApp) {
-                    TelegramWebApp.MainButton.hideProgress();
-                    TelegramWebApp.MainButton.enable();
-                }
-                
-                // Через 3 секунды скрываем ошибку
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                    loading.innerHTML = '<p>⏳ Отправка данных в бота...</p>';
-                }, 3000);
-            }
-        }
+    } finally {
+        submitBtn.style.display = 'block';
+        loading.style.display = 'none';
+    }
+});
 
         // Обработка файлов
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const fileNameDiv = document.getElementById('fileName');
             if (this.files.length > 0) {
-                const file = this.files[0];
-                const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                fileNameDiv.innerHTML = `Выбран файл: ${file.name} (${fileSize} MB)`;
-                
-                // Проверка размера файла
-                if (file.size > 10 * 1024 * 1024) {
-                    fileNameDiv.innerHTML += '<div class="error">Файл слишком большой (макс. 10 MB)</div>';
-                    this.value = '';
-                }
-                
-                // Обновляем валидацию
-                isFormValid = validateForm();
-                if (TelegramWebApp && isFormValid) {
-                    TelegramWebApp.MainButton.enable();
-                }
+                fileNameDiv.innerHTML = `Выбран файл: ${this.files[0].name}`;
             } else {
                 fileNameDiv.innerHTML = '';
             }
         });
-
-        // Установка текущей даты и времени по умолчанию
-        document.addEventListener('DOMContentLoaded', function() {
-            const now = new Date();
-            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-                .toISOString()
-                .slice(0, 16);
-            document.querySelector('input[name="problem_date"]').value = localDateTime;
-            
-            // Настраиваем валидацию формы
-            setupFormValidation();
-            
-            console.log('Форма Jeans загружена и готова к работе');
-        });
-
-        // Обработчик для тестирования вне Telegram
-        window.testSubmit = function() {
-            const form = document.getElementById('jeansForm');
-            const formData = new FormData(form);
-            const formDataObject = formDataToObject(formData);
-            
-            console.log('Тестовые данные:', {
-                action: 'create_ticket',
-                form_type: 'jeans',
-                form_data: formDataObject,
-                user_data: userData
-            });
-            
-            alert('Данные готовы к отправке (в Telegram откроется бот)');
-        };
     </script>
 </body>
 </html>
