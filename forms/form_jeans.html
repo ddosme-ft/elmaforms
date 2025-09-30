@@ -133,7 +133,18 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
-        
+        // Получаем данные пользователя из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userDataParam = urlParams.get('user_data');
+        let userData = {};
+        if (userDataParam) {
+            try {
+                userData = JSON.parse(decodeURIComponent(userDataParam));
+                document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
+        }
         // Функция для формирования описания
         function buildDescription(formData) {
             const fields = {
@@ -222,3 +233,4 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
     </script>
 </body>
 </html>
+
