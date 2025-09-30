@@ -110,51 +110,63 @@
         }
 
         // Обработка отправки формы
-        document.getElementById('removeWaitingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const comment = formData.get('comment');
-            
-            // Формируем описание
-            let description = `**СНЯТИЕ С ОЖИДАНИЯ**\n\n`;
-            description += `**Номер обращения:** ${ticketId}\n\n`;
-            description += `**Комментарий:** ${comment}\n\n`;
-            
-            if (selectedFiles.length > 0) {
-                description += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
-                selectedFiles.forEach(file => {
-                    description += `- ${file.name} (${formatFileSize(file.size)})\n`;
-                });
-            }
+        let isSending = false;
+document.getElementById('removeWaitingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (isSending) {
+        console.log('Already sending, skipping...');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    const comment = formData.get('comment');
+    
+    // Формируем описание
+    let description = `**СНЯТИЕ С ОЖИДАНИЯ**\n\n`;
+    description += `**Номер обращения:** ${ticketId}\n\n`;
+    description += `**Комментарий:** ${comment}\n\n`;
+    
+    if (selectedFiles.length > 0) {
+        description += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
+        selectedFiles.forEach(file => {
+            description += `- ${file.name} (${formatFileSize(file.size)})\n`;
+        });
+    }
 
             // Подготавливаем данные для отправки
-            const data = {
-                form_type: "Снятие с ожидания",
-                description: description,
-                ticket_id: ticketId,
-                comment: comment,
-                file_count: selectedFiles.length,
-                file_names: selectedFiles.map(f => f.name)
-            };
-            
-            console.log('Отправляемые данные:', data);
-            Telegram.WebApp.MainButton.offClick();
-            // Настраиваем кнопку отправки
-            Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
-            Telegram.WebApp.MainButton.show();
-            
-            // Устанавливаем обработчик
-            console.log('Form submitted, data:', data);
-            Telegram.WebApp.MainButton.onClick(function() {
-                console.log('Отправка данных в бота...');
-                Telegram.WebApp.sendData(JSON.stringify(data));
-                Telegram.WebApp.MainButton.hide();
-            });
-            
-            // Показываем пользователю, что нужно нажать кнопку отправки
-            Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
-        });
+    const data = {
+        form_type: "Снятие с ожидания",
+        description: description,
+        ticket_id: ticketId,
+        comment: comment,
+        file_count: selectedFiles.length,
+        file_names: selectedFiles.map(f => f.name)
+    };
+    
+    console.log('Form submitted, data:', data);
+    
+    // УБЕРИТЕ старый обработчик если был
+    Telegram.WebApp.MainButton.offClick();
+    
+    // Настраиваем кнопку отправки
+    Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
+    Telegram.WebApp.MainButton.show();
+    
+    // Устанавливаем ОДИН обработчик
+    Telegram.WebApp.MainButton.onClick(function() {
+        if (isSending) return;
+        isSending = true;
+        
+        console.log('MainButton clicked, sending data...');
+        Telegram.WebApp.sendData(JSON.stringify(data));
+        console.log('Data sent, hiding button...');
+        Telegram.WebApp.MainButton.hide();
+        isSending = false;
+    });
+    
+    Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
+});
 
         // Автоматически расширяем WebApp
         Telegram.WebApp.expand();
@@ -162,5 +174,6 @@
 </body>
 
 </html>
+
 
 
