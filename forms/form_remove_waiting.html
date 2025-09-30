@@ -145,10 +145,14 @@
             Telegram.WebApp.MainButton.show();
             
             // Устанавливаем обработчик
+            console.log('Form submitted, data:', data);
             Telegram.WebApp.MainButton.onClick(function() {
                 console.log('Отправка данных в бота...');
                 Telegram.WebApp.sendData(JSON.stringify(data));
                 Telegram.WebApp.MainButton.hide();
+            } catch (error) {
+                console.error('Error sending data:', error);
+                Telegram.WebApp.showAlert('Ошибка отправки: ' + error.message);
             });
             
             // Показываем пользователю, что нужно нажать кнопку отправки
@@ -161,3 +165,4 @@
 </body>
 
 </html>
+
