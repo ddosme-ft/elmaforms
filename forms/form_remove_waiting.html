@@ -139,7 +139,7 @@
             };
             
             console.log('Отправляемые данные:', data);
-            
+            Telegram.WebApp.MainButton.offClick();
             // Настраиваем кнопку отправки
             Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
             Telegram.WebApp.MainButton.show();
@@ -159,4 +159,5 @@
         Telegram.WebApp.expand();
     </script>
 </body>
+
 </html>
