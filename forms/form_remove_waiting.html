@@ -58,17 +58,6 @@
         
         let selectedFiles = [];
         
-        // Получаем параметры из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const ticketId = urlParams.get('ticket_id');
-        const userDataParam = urlParams.get('user_data');
-        
-        // Устанавливаем номер обращения
-        if (ticketId) {
-            document.getElementById('ticketId').textContent = ticketId;
-            document.getElementById('ticketIdInput').value = ticketId;
-        }
-        
         // Обработка выбора файлов
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const files = Array.from(this.files);
@@ -108,64 +97,74 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
+        // Получаем данные тикета из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticketId = urlParams.get('ticket_id');
+        let userData = {};
+        if (ticketId) {
+            document.getElementById('ticketId').textContent = ticketId;
+            document.getElementById('ticketIdInput').value = ticketId;
+        }
+        // Функция для формирования описания
+        function buildcomment(formData) {
+            const fields = {
+                'Комментарий': formData.get('comment'),
+            };
 
-        // Обработка отправки формы
-        let isSending = false;
-document.getElementById('removeWaitingForm').addEventListener('submit', function(e) {
+            let comment = '**Снятие с ожидания**\n\n';
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (fieldValue && fieldValue.trim() !== '') {
+                    comment += `**${fieldName}:** ${fieldValue}\n\n`;
+                }
+            }
+
+            // Добавляем информацию о файлах
+            if (selectedFiles.length > 0) {
+                comment += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
+                selectedFiles.forEach(file => {
+                    comment += `- ${file.name} (${formatFileSize(file.size)})\n`;
+                });
+            }
+
+            return comment.trim();
+        }
+
+// Обработка отправки формы - исправленный вариант
+document.getElementById('otherForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    if (isSending) {
-        console.log('Already sending, skipping...');
-        return;
-    }
-    
     const formData = new FormData(this);
-    const comment = formData.get('comment');
+    const comment = buildcomment(formData);
     
-    // Формируем описание
-    let description = `**СНЯТИЕ С ОЖИДАНИЯ**\n\n`;
-    description += `**Номер обращения:** ${ticketId}\n\n`;
-    description += `**Комментарий:** ${comment}\n\n`;
-    
-    if (selectedFiles.length > 0) {
-        description += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
-        selectedFiles.forEach(file => {
-            description += `- ${file.name} (${formatFileSize(file.size)})\n`;
-        });
-    }
-
-            // Подготавливаем данные для отправки
+    // Подготавливаем данные для отправки
     const data = {
         form_type: "Снятие с ожидания",
-        description: description,
-        ticket_id: ticketId,
         comment: comment,
+        form_data: {
+            comment: formData.get('comment'),
+        },
         file_count: selectedFiles.length,
         file_names: selectedFiles.map(f => f.name)
     };
     
-    console.log('Form submitted, data:', data);
+    console.log('Отправляемые данные:', data);
     
-    // УБЕРИТЕ старый обработчик если был
+    // Убираем старый обработчик если был
     Telegram.WebApp.MainButton.offClick();
     
-    // Настраиваем кнопку отправки
-    Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
+    // Настраиваем кнопку
+    Telegram.WebApp.MainButton.setText('📤 Отправить обращение');
     Telegram.WebApp.MainButton.show();
     
-    // Устанавливаем ОДИН обработчик
+    // Устанавливаем обработчик
     Telegram.WebApp.MainButton.onClick(function() {
-        if (isSending) return;
-        isSending = true;
-        
-        console.log('MainButton clicked, sending data...');
+        console.log('Отправка данных в бота...');
         Telegram.WebApp.sendData(JSON.stringify(data));
-        console.log('Data sent, hiding button...');
         Telegram.WebApp.MainButton.hide();
-        isSending = false;
     });
     
-    Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
+    // Показываем пользователю, что нужно нажать кнопку отправки
+    Telegram.WebApp.showAlert('Нажмите кнопку "📤 Отправить обращение" внизу экрана для завершения');
 });
 
         // Автоматически расширяем WebApp
@@ -174,6 +173,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
 </body>
 
 </html>
+
 
 
 
