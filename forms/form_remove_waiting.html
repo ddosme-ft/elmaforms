@@ -198,7 +198,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     // Устанавливаем обработчик
     Telegram.WebApp.MainButton.onClick(function() {
         console.log('Отправка данных в бота...');
-        Telegram.WebApp.sendData(JSON.stringify(data));
+        Telegram.WebApp.sendData(data);
         Telegram.WebApp.MainButton.hide();
     });
     
@@ -211,6 +211,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     </script>
 </body>
 </html>
+
 
 
 
