@@ -129,20 +129,31 @@
             return comment.trim();
         }
 
-// Обработка отправки формы - исправленный вариант
+// Обработка отправки формы - ИСПРАВЛЕННЫЙ ВАРИАНТ
 document.getElementById('removeWaitingForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
-    const comment = buildcomment(formData);
+    const comment = formData.get('comment');
     
+    // Формируем описание
+    let description = `**СНЯТИЕ С ОЖИДАНИЯ**\n\n`;
+    description += `**Номер обращения:** ${ticketId}\n\n`;
+    description += `**Комментарий:** ${comment}\n\n`;
+    
+    if (selectedFiles.length > 0) {
+        description += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
+        selectedFiles.forEach(file => {
+            description += `- ${file.name} (${formatFileSize(file.size)})\n`;
+        });
+    }
+
     // Подготавливаем данные для отправки
     const data = {
         form_type: "Снятие с ожидания",
+        description: description,
+        ticket_id: ticketId,
         comment: comment,
-        form_data: {
-            comment: formData.get('comment'),
-        },
         file_count: selectedFiles.length,
         file_names: selectedFiles.map(f => f.name)
     };
@@ -152,8 +163,8 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     // Убираем старый обработчик если был
     Telegram.WebApp.MainButton.offClick();
     
-    // Настраиваем кнопку
-    Telegram.WebApp.MainButton.setText('📤 Отправить обращение');
+    // Настраиваем кнопку отправки
+    Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
     Telegram.WebApp.MainButton.show();
     
     // Устанавливаем обработчик
@@ -164,7 +175,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     });
     
     // Показываем пользователю, что нужно нажать кнопку отправки
-    Telegram.WebApp.showAlert('Нажмите кнопку "📤 Отправить обращение" внизу экрана для завершения');
+    Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
 });
 
         // Автоматически расширяем WebApp
@@ -173,6 +184,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
 </body>
 
 </html>
+
 
 
 
