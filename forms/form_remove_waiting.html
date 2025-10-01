@@ -160,9 +160,6 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     
     console.log('Отправляемые данные:', data);
     
-    // Убираем старый обработчик если был
-    Telegram.WebApp.MainButton.offClick();
-    
     // Настраиваем кнопку отправки
     Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
     Telegram.WebApp.MainButton.show();
@@ -171,11 +168,12 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     Telegram.WebApp.MainButton.onClick(function() {
         console.log('Отправка данных в бота...');
         Telegram.WebApp.sendData(JSON.stringify(data));
-        Telegram.WebApp.MainButton.hide();
+        //Telegram.WebApp.MainButton.hide();
+        Telegram.WebApp.close();
     });
     
     // Показываем пользователю, что нужно нажать кнопку отправки
-    Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
+   // Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
 });
 
         // Автоматически расширяем WebApp
@@ -184,6 +182,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
 </body>
 
 </html>
+
 
 
 
