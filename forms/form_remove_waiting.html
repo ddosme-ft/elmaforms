@@ -168,26 +168,20 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     Telegram.WebApp.MainButton.onClick(function() {
         console.log('Отправка данных в бота...');
         Telegram.WebApp.sendData(JSON.stringify(data));
-        //Telegram.WebApp.MainButton.hide();
-        Telegram.WebApp.close();
+        Telegram.WebApp.MainButton.hide();
     });
     
     // Показываем пользователю, что нужно нажать кнопку отправки
-   // Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
+    Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
 });
 
         // Автоматически расширяем WebApp
         Telegram.WebApp.expand();
+        
+        // Устанавливаем текущую дату и время по умолчанию
+        const now = new Date();
+        const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.querySelector('input[name="problem_date"]').value = localDateTime;
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
