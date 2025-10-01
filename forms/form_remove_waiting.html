@@ -87,7 +87,6 @@ function testSimpleSend() {
 if (!Telegram.WebApp.initData) {
     console.error("❌ NOT IN TELEGRAM WEBAPP CONTEXT!");
     alert("Эта форма должна открываться через Telegram бота");
-    return;
 }
 
 if (Telegram.WebApp.platform === "unknown") {
@@ -217,3 +216,4 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     </script>
 </body>
 </html>
+
