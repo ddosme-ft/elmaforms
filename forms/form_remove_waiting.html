@@ -1,39 +1,219 @@
-<!--
-    Simple static Telegram WebApp. Does not verify the WebAppInitData, as a bot token would be needed for that.
--->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>python-telegram-bot Example WebApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Снятие с ожидания</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        textarea { height: 100px; resize: vertical; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn:hover { background: #0056b3; }
+        .file-input { display: none; }
+        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; margin-right: 10px; }
+        .file-list { margin-top: 10px; }
+        .file-item { background: #f8f9fa; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .required::after { content: " *"; color: red; }
+        .ticket-info { background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+    </style>
 </head>
-<script type="text/javascript">
-    const colorPicker = new iro.ColorPicker('#picker', {
-        borderColor: "#ffffff",
-        borderWidth: 1,
-        width: Math.round(document.documentElement.clientWidth / 2),
-    });
-    colorPicker.on('color:change', function (color) {
-        document.body.style.background = color.hexString;
-    });
+<body>
+    <div class="container">
+        <h2>🔄 Снятие обращения с ожидания</h2>
+        
+        <div class="ticket-info">
+            <strong>Номер обращения:</strong> <span id="ticketId">-</span>
+        </div>
+        
+        <form id="removeWaitingForm">
+            <div class="form-group">
+                <label class="required">Комментарий</label>
+                <textarea name="comment" required placeholder="Укажите дополнительную информацию или решение проблемы..."></textarea>
+            </div>
 
+            <div class="form-group">
+                <label>Прикрепить файлы</label>
+                <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
+                    📎 Прикрепить файл
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf,.doc,.docx" multiple>
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <input type="hidden" name="ticket_id" id="ticketIdInput">
+            <input type="hidden" name="form_type" value="Remove_waiting">
+            
+            <button type="submit" class="btn" id="submitBtn">🔄 Снять с ожидания</button>
+        </form>
+    </div>
+<button type="button" onclick="testSimpleSend()" style="background: red; color: white; padding: 10px; margin: 10px;">
+    🔴 ТЕСТ: Отправить простые данные
+</button>
+
+<script>
     Telegram.WebApp.ready();
-    Telegram.WebApp.MainButton.setText('Choose Color').show().onClick(function () {
-        const data = JSON.stringify({hex: colorPicker.color.hexString, rgb: colorPicker.color.rgb});
-        Telegram.WebApp.sendData(data);
-        Telegram.WebApp.close();
+        Telegram.WebApp.expand();
+function testSimpleSend() {
+    const testData = {
+        form_type: "TEST",
+        message: "Hello from remove waiting form"
+    };
+    
+    console.log("Testing simple send:", testData);
+    
+    try {
+        Telegram.WebApp.sendData(JSON.stringify(testData));
+        console.log("✅ Simple sendData executed");
+    } catch (e) {
+        console.error("❌ Simple sendData failed:", e);
+    }
+}
+</script>
+    <script>
+        console.log('Telegram WebApp initialized:', Telegram.WebApp.initData);
+        console.log('Telegram WebApp version:', Telegram.WebApp.version);
+        console.log('WebApp features:');
+        console.log('- sendData available:', typeof Telegram.WebApp.sendData === 'function');
+        console.log('- MainButton available:', typeof Telegram.WebApp.MainButton === 'object');
+        console.log('- expand available:', typeof Telegram.WebApp.expand === 'function');
+        // Инициализация WebApp
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+if (!Telegram.WebApp.initData) {
+    console.error("❌ NOT IN TELEGRAM WEBAPP CONTEXT!");
+    alert("Эта форма должна открываться через Telegram бота");
+    return;
+}
+
+if (Telegram.WebApp.platform === "unknown") {
+    console.error("❌ UNKNOWN PLATFORM -可能 открыто в браузере");
+}
+        let selectedFiles = [];
+        
+        // Обработка выбора файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(this.files);
+            selectedFiles = [...selectedFiles, ...files];
+            updateFileList();
+        });
+        
+        // Обновление списка файлов
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    ${file.name} (${formatFileSize(file.size)})
+                    <button type="button" onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
+                        ✕
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+        
+        // Удаление файла
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+        
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        // Получаем данные тикета из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticketId = urlParams.get('ticket_id');
+        let userData = {};
+        if (ticketId) {
+            document.getElementById('ticketId').textContent = ticketId;
+            document.getElementById('ticketIdInput').value = ticketId;
+        }
+        // Функция для формирования описания
+        function buildcomment(formData) {
+            const fields = {
+                'Комментарий': formData.get('comment'),
+            };
+
+            let comment = '**Снятие с ожидания**\n\n';
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (fieldValue && fieldValue.trim() !== '') {
+                    comment += `**${fieldName}:** ${fieldValue}\n\n`;
+                }
+            }
+
+            // Добавляем информацию о файлах
+            if (selectedFiles.length > 0) {
+                comment += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
+                selectedFiles.forEach(file => {
+                    comment += `- ${file.name} (${formatFileSize(file.size)})\n`;
+                });
+            }
+
+            return comment.trim();
+        }
+
+// Обработка отправки формы - ИСПРАВЛЕННЫЙ ВАРИАНТ
+document.getElementById('removeWaitingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const comment = formData.get('comment');
+    
+    // Формируем описание
+    let description = `**СНЯТИЕ С ОЖИДАНИЯ**\n\n`;
+    description += `**Номер обращения:** ${ticketId}\n\n`;
+    description += `**Комментарий:** ${comment}\n\n`;
+    
+    if (selectedFiles.length > 0) {
+        description += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
+        selectedFiles.forEach(file => {
+            description += `- ${file.name} (${formatFileSize(file.size)})\n`;
+        });
+    }
+
+    // Подготавливаем данные для отправки
+    const data = {
+        form_type: "Remove_waiting",
+        description: description,
+        form_data: {  // ← Добавьте form_data как в работающей форме
+            ticket_id: ticketId,
+            comment: comment,
+            file_count: selectedFiles.length,
+            file_names: selectedFiles.map(f => f.name)
+        },
+        file_count: selectedFiles.length,
+        file_names: selectedFiles.map(f => f.name)
+    };
+    
+    // Настраиваем кнопку отправки
+    Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
+    Telegram.WebApp.MainButton.show();
+    
+    // Устанавливаем обработчик
+    Telegram.WebApp.MainButton.onClick(function() {
+        console.log('Отправка данных в бота...');
+        console.log('Отправляемые данные:', data);
+        Telegram.WebApp.sendData(JSON.stringify(data));
+        Telegram.WebApp.MainButton.hide();
     });
-</script>
-<body style="background-color: #ffffff">
-<div style="position: absolute; margin-top: 5vh; margin-left: 5vw; height: 90vh; width: 90vw; border-radius: 5vh; background-color: var(--tg-theme-bg-color); box-shadow: 0 0 2vw
- #000000;">
-    <div id="picker"
-         style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%"></div>
-</div>
+    
+    // Показываем пользователю, что нужно нажать кнопку отправки
+    Telegram.WebApp.showAlert('Нажмите кнопку "🔄 Снять с ожидания" внизу экрана для завершения');
+});
+    </script>
 </body>
-<script type="text/javascript">
-    Telegram.WebApp.expand();
-</script>
 </html>
