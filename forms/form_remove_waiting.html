@@ -195,12 +195,8 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
 
         // Автоматически расширяем WebApp
         Telegram.WebApp.expand();
-        
-        // Устанавливаем текущую дату и время по умолчанию
-        const now = new Date();
-        const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-        document.querySelector('input[name="problem_date"]').value = localDateTime;
     </script>
 </body>
 </html>
+
 
