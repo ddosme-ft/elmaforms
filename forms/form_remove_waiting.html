@@ -51,7 +51,28 @@
             <button type="submit" class="btn" id="submitBtn">🔄 Снять с ожидания</button>
         </form>
     </div>
+<!-- Дублирующая кнопка для теста -->
+<button type="button" id="directSubmit" style="background: #28a745; color: white; padding: 10px; margin-top: 10px; width: 100%;">
+    🔄 Отправить напрямую
+</button>
 
+<script>
+document.getElementById('directSubmit').addEventListener('click', function() {
+    const comment = document.querySelector('textarea[name="comment"]').value;
+    
+    const data = {
+        form_type: "Remove_waiting",
+        description: `**СНЯТИЕ С ОЖИДАНИЯ**\n\n**Номер обращения:** ${ticketId}\n\n**Комментарий:** ${comment}`,
+        ticket_id: ticketId,
+        comment: comment,
+        file_count: 0,
+        file_names: []
+    };
+    
+    console.log('Direct send data:', data);
+    Telegram.WebApp.sendData(JSON.stringify(data));
+});
+</script>
     <script>
         console.log('Telegram WebApp initialized:', Telegram.WebApp.initData);
         console.log('Telegram WebApp version:', Telegram.WebApp.version);
@@ -186,6 +207,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     </script>
 </body>
 </html>
+
 
 
 
