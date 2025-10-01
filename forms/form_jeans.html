@@ -204,7 +204,7 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
     };
     
     console.log('Отправляемые данные:', data);
-    
+    console.log('Отправляемые данные JSON:', JSON.stringify(data));
     // Убираем старый обработчик если был
     Telegram.WebApp.MainButton.offClick();
     
@@ -233,4 +233,5 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
     </script>
 </body>
 </html>
+
 
