@@ -51,29 +51,17 @@
             <button type="submit" class="btn" id="submitBtn">🔄 Снять с ожидания</button>
         </form>
     </div>
-<button type="button" onclick="testData()" style="background: #ffc107; margin-top: 10px;">
-    Тест отправки данных
-</button>
 
-<script>
-function testData() {
-    const testData = {
-        form_type: "Remove_waiting",
-        description: "ТЕСТОВЫЕ ДАННЫЕ",
-        ticket_id: "12345",
-        comment: "Тестовый комментарий",
-        file_count: 0,
-        file_names: []
-    };
-    
-    console.log('Тестовая отправка:', testData);
-    Telegram.WebApp.sendData(JSON.stringify(testData));
-}
-</script>
     <script>
+        console.log('Telegram WebApp initialized:', Telegram.WebApp.initData);
+        console.log('Telegram WebApp version:', Telegram.WebApp.version);
+        console.log('WebApp features:');
+        console.log('- sendData available:', typeof Telegram.WebApp.sendData === 'function');
+        console.log('- MainButton available:', typeof Telegram.WebApp.MainButton === 'object');
+        console.log('- expand available:', typeof Telegram.WebApp.expand === 'function');
         // Инициализация WebApp
         Telegram.WebApp.ready();
-        
+
         let selectedFiles = [];
         
         // Обработка выбора файлов
@@ -198,5 +186,6 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     </script>
 </body>
 </html>
+
 
 
