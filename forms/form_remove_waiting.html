@@ -179,8 +179,12 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     const data = {
         form_type: "Remove_waiting",
         description: description,
-        ticket_id: ticketId,
-        comment: comment,
+        form_data: {  // ← Добавьте form_data как в работающей форме
+            ticket_id: ticketId,
+            comment: comment,
+            file_count: selectedFiles.length,
+            file_names: selectedFiles.map(f => f.name)
+        },
         file_count: selectedFiles.length,
         file_names: selectedFiles.map(f => f.name)
     };
@@ -207,6 +211,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     </script>
 </body>
 </html>
+
 
 
 
