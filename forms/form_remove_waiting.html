@@ -168,8 +168,6 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
         file_names: selectedFiles.map(f => f.name)
     };
     
-    console.log('Отправляемые данные:', data);
-    console.log('Отправляемые данные JSON:', JSON.stringify(data));
     // Настраиваем кнопку отправки
     Telegram.WebApp.MainButton.setText('🔄 Снять с ожидания');
     Telegram.WebApp.MainButton.show();
@@ -191,6 +189,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
     </script>
 </body>
 </html>
+
 
 
 
