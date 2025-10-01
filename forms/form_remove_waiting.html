@@ -46,7 +46,7 @@
             </div>
 
             <input type="hidden" name="ticket_id" id="ticketIdInput">
-            <input type="hidden" name="form_type" value="Снятие с ожидания">
+            <input type="hidden" name="form_type" value="Remove_waiting">
             
             <button type="submit" class="btn" id="submitBtn">🔄 Снять с ожидания</button>
         </form>
@@ -150,7 +150,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
 
     // Подготавливаем данные для отправки
     const data = {
-        form_type: "Снятие с ожидания",
+        form_type: "Remove_waiting",
         description: description,
         ticket_id: ticketId,
         comment: comment,
@@ -182,6 +182,7 @@ document.getElementById('removeWaitingForm').addEventListener('submit', function
 </body>
 
 </html>
+
 
 
 
