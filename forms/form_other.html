@@ -127,7 +127,7 @@
             document.getElementById('success').style.display = 'none';
             document.getElementById('error').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'block';
-            document.getElementById('jeansForm').style.display = 'block';
+            document.getElementById('otherForm').style.display = 'block';
         }
 
         // Функция отправки данных обратно в бот
@@ -156,7 +156,7 @@
         }
 
         // Обработка отправки формы
-        document.getElementById('jeansForm').addEventListener('submit', async function(e) {
+        document.getElementById('otherForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
@@ -164,7 +164,7 @@
             const success = document.getElementById('success');
             const error = document.getElementById('error');
             const errorMessage = document.getElementById('errorMessage');
-            const form = document.getElementById('jeansForm');
+            const form = document.getElementById('otherForm');
             
             // Показываем загрузку
             submitBtn.style.display = 'none';
