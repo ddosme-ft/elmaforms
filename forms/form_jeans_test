@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проблема Jeans</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        textarea { height: 80px; resize: vertical; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #6c757d; cursor: not-allowed; }
+        .file-input { display: none; }
+        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; margin-right: 10px; }
+        .file-list { margin-top: 10px; }
+        .file-item { background: #f8f9fa; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .required::after { content: " *"; color: red; }
+        .loading { display: none; text-align: center; margin: 10px 0; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📱 Проблема Jeans</h2>
+        
+        <form id="jeansForm">
+            <div class="form-group">
+                <label class="required">Описание проблемы</label>
+                <textarea name="problem_description" required placeholder="Опишите суть проблемы..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Проблема только у вас или массовая?</label>
+                <select name="problem_scope" required>
+                    <option value="">Выберите вариант</option>
+                    <option value="у меня">Только у меня</option>
+                    <option value="массовая">Массовая проблема</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Скриншоты или запись экрана</label>
+                <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
+                    📎 Добавить файл
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf" multiple>
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Логин ТПД</label>
+                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин">
+            </div>
+
+            <div class="form-group">
+                <label class="required">ID ТТ, где была обнаружена проблема</label>
+                <input type="text" name="tt_id" required placeholder="Введите ID торговой точки">
+            </div>
+
+            <div class="form-group">
+                <label>Версия устройства</label>
+                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15">
+            </div>
+
+            <div class="form-group">
+                <label>Версия Jeans/Версия JedAI</label>
+                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1">
+            </div>
+
+            <div class="form-group">
+                <label class="required">Дата и время возникновения проблемы</label>
+                <input type="datetime-local" name="problem_date" required>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Проблема воспроизводится всегда или только сейчас?</label>
+                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически">
+            </div>
+
+            <div class="form-group">
+                <label class="required">Подробно опишите шаги для воспроизведения</label>
+                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Отправка обращения...</p>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">📤 Отправить обращение</button>
+        </form>
+    </div>
+
+    <script>
+        // Инициализация WebApp
+        Telegram.WebApp.ready();
+        
+        let selectedFiles = [];
+        
+        // Обработка выбора файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(this.files);
+            selectedFiles = [...selectedFiles, ...files];
+            updateFileList();
+        });
+        
+        // Обновление списка файлов
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    ${file.name} (${formatFileSize(file.size)})
+                    <button type="button" onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
+                        ✕
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+        
+        // Удаление файла
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+        
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Получаем данные пользователя из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userDataParam = urlParams.get('user_data');
+        let userData = {};
+        if (userDataParam) {
+            try {
+                userData = JSON.parse(decodeURIComponent(userDataParam));
+                document.querySelector('input[name="tpd_login"]').value = userData.tpd_login || '';
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
+        }
+
+        // Функция для формирования описания
+        function buildDescription(formData) {
+            const fields = {
+                'Описание проблемы': formData.get('problem_description'),
+                'Область проблемы': formData.get('problem_scope'),
+                'Логин ТПД': formData.get('tpd_login'),
+                'ID ТТ': formData.get('tt_id'),
+                'Версия устройства': formData.get('device_version'),
+                'Версия приложения': formData.get('app_version'),
+                'Дата и время проблемы': formData.get('problem_date'),
+                'Воспроизводимость': formData.get('reproducibility'),
+                'Шаги воспроизведения': formData.get('steps_to_reproduce')
+            };
+
+            let description = '**ПРОБЛЕМА JEANS**\n\n';
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (fieldValue && fieldValue.trim() !== '') {
+                    description += `**${fieldName}:** ${fieldValue}\n\n`;
+                }
+            }
+
+            // Добавляем информацию о файлах
+            if (selectedFiles.length > 0) {
+                description += `**Прикрепленные файлы:** ${selectedFiles.length} файл(ов)\n`;
+                selectedFiles.forEach(file => {
+                    description += `- ${file.name} (${formatFileSize(file.size)})\n`;
+                });
+            }
+
+            return description.trim();
+        }
+
+        // Функция для чтения файлов как base64
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Убираем data:image/... префикс
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Обработка отправки формы - УПРОЩЕННАЯ ВЕРСИЯ
+        document.getElementById('jeansForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Показываем индикатор загрузки
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправка...';
+            loading.style.display = 'block';
+            
+            try {
+                const formData = new FormData(this);
+                const description = buildDescription(formData);
+                
+                // Читаем файлы как base64
+                const fileDataPromises = selectedFiles.map(file => readFileAsBase64(file));
+                const fileData = await Promise.all(fileDataPromises);
+                
+                // Подготавливаем данные для отправки
+                const data = {
+                    form_type: "Проблема Jeans",
+                    description: description,
+                    form_data: {
+                        problem_description: formData.get('problem_description'),
+                        problem_scope: formData.get('problem_scope'),
+                        tpd_login: formData.get('tpd_login'),
+                        tt_id: formData.get('tt_id'),
+                        device_version: formData.get('device_version'),
+                        app_version: formData.get('app_version'),
+                        problem_date: formData.get('problem_date'),
+                        reproducibility: formData.get('reproducibility'),
+                        steps_to_reproduce: formData.get('steps_to_reproduce')
+                    },
+                    file_count: selectedFiles.length,
+                    file_names: selectedFiles.map(f => f.name),
+                    file_data: fileData,
+                    file_types: selectedFiles.map(f => f.type)
+                };
+                
+                console.log('Отправка данных в бота...');
+                
+                // ОТПРАВЛЯЕМ СРАЗУ - без дополнительной кнопки
+                Telegram.WebApp.sendData(JSON.stringify(data));
+                
+                // Показываем уведомление об успехе
+                Telegram.WebApp.showAlert('Обращение успешно отправлено! Закрываю форму...');
+                
+                // Закрываем WebApp через небольшую задержку
+                setTimeout(() => {
+                    Telegram.WebApp.close();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Ошибка при отправке:', error);
+                Telegram.WebApp.showAlert('Ошибка при отправке обращения. Попробуйте еще раз.');
+                
+                // Восстанавливаем кнопку
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📤 Отправить обращение';
+                loading.style.display = 'none';
+            }
+        });
+
+        // Автоматически расширяем WebApp
+        Telegram.WebApp.expand();
+        
+        // Устанавливаем текущую дату и время по умолчанию
+        const now = new Date();
+        const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.querySelector('input[name="problem_date"]').value = localDateTime;
+        
+        // Скрываем кнопку MainButton, так как она нам не нужна
+        Telegram.WebApp.MainButton.hide();
+    </script>
+</body>
+</html>
