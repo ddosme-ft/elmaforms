@@ -15,9 +15,7 @@
         .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
         .btn:hover { background: #0056b3; }
         .file-input { display: none; }
-        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; margin-right: 10px; }
-        .file-list { margin-top: 10px; }
-        .file-item { background: #f8f9fa; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
         .required::after { content: " *"; color: red; }
     </style>
 </head>
@@ -79,8 +77,8 @@
                 <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
                     📎 Прикрепить файл
                 </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf,.doc,.docx">
-                <div id="fileList" class="file-list"></div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf">
+                <div id="fileName"></div>
             </div>
 
             <div class="form-group">
