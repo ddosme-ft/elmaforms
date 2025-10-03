@@ -183,9 +183,7 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
     
     const formData = new FormData(this);
     const description = buildDescription(formData);
-    selectedFiles.forEach((file, index) => {
-        formData.append(`attachments`, file);
-    });
+    
     // Подготавливаем данные для отправки
     const data = {
         form_type: "Проблема Jeans",
@@ -202,23 +200,12 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
             steps_to_reproduce: formData.get('steps_to_reproduce')
         },
         file_count: selectedFiles.length,
-        file_names: selectedFiles.map(f => f.name)
-        files: selectedFiles
+        file_names: selectedFiles.map(f => f.name),
     };
-        
-    // Создаем FormData для передачи файлов
-    const webAppData = new FormData();
-    webAppData.append('json_data', JSON.stringify({
-        form_type: data.form_type,
-        description: data.description,
-        form_data: data.form_data,
-        file_count: data.file_count,
-        file_names: data.file_names
-    }));
-    selectedFiles.forEach((file, index) => {
-        webAppData.append(`file_${index}`, file);
-    });
-        
+    const fileInput = document.getElementById('fileInput');
+                if (fileInput.files.length > 0) {
+                    formData.append('attachments', fileInput.files[0]);
+                }
     console.log('Отправляемые данные:', data);
     console.log('Отправляемые данные JSON:', JSON.stringify(data));
     // Убираем старый обработчик если был
