@@ -95,11 +95,21 @@
         let selectedFiles = [];
         
         // Обработка выбора файлов
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const files = Array.from(this.files);
-            selectedFiles = [...selectedFiles, ...files];
-            updateFileList();
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const files = Array.from(this.files);
+    selectedFiles = [...selectedFiles, ...files];
+    updateFileList();
+    
+    // Логируем информацию о файлах
+    files.forEach(file => {
+        console.log('Выбран файл:', {
+            name: file.name,
+            path: file.path || file.name, // path может быть доступен в некоторых браузерах
+            size: file.size,
+            type: file.type
         });
+    });
+});
         
         // Обновление списка файлов
         function updateFileList() {
@@ -201,8 +211,15 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
         },
         file_count: selectedFiles.length,
         file_names: selectedFiles.map(f => f.name),
-        file_sizes: selectedFiles.map(f => f.size),
-        file_types: selectedFiles.map(f => f.type)
+        // Передаем информацию о файлах с путями
+        files_info: selectedFiles.map(file => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            path: file.path || file.name, // Используем path если доступен
+            lastModified: file.lastModified,
+            webkitRelativePath: file.webkitRelativePath || ''
+        }))
     };
     
     console.log('Отправляемые данные:', data);
