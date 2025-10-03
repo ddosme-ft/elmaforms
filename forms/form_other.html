@@ -14,8 +14,11 @@
         textarea { height: 80px; resize: vertical; }
         .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
         .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #6c757d; cursor: not-allowed; }
         .file-input { display: none; }
         .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .file-list { margin-top: 10px; }
+        .file-item { background: #f8f9fa; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }
         .required::after { content: " *"; color: red; }
         .loading { display: none; text-align: center; }
         .success { display: none; text-align: center; color: #28a745; }
@@ -80,8 +83,8 @@
                 <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
                     📎 Прикрепить файл
                 </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf">
-                <div id="fileName"></div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf" multiple>
+                <div id="fileList" class="file-list"></div>
             </div>
 
             <div class="form-group">
@@ -90,6 +93,7 @@
             </div>
 
             <input type="hidden" name="form_type" value="Другая проблема">
+            
             <!-- Состояния формы -->
             <div class="loading" id="loading">
                 <p>⏳ Отправка обращения...</p>
@@ -115,6 +119,17 @@
         const urlParams = new URLSearchParams(window.location.search);
         const userDataParam = urlParams.get('user_data');
         let userData = {};
+        
+        if (userDataParam) {
+            try {
+                userData = JSON.parse(decodeURIComponent(userDataParam));
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
+        }
+
+        let selectedFiles = [];
+        
         // Функция для формирования описания
         function buildDescription(formData) {
             const fields = {
@@ -137,7 +152,8 @@
 
             return description.trim();
         }
-// Функция сброса формы после ошибки
+
+        // Функция сброса формы после ошибки
         function resetForm() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('success').style.display = 'none';
@@ -150,7 +166,6 @@
         function sendDataToBot(data) {
             if (window.Telegram && window.Telegram.WebApp) {
                 try {
-                    // Важно: передаем строку JSON, а не объект
                     const jsonData = JSON.stringify(data);
                     console.log('Sending data to bot:', jsonData);
                     window.Telegram.WebApp.sendData(jsonData);
@@ -169,6 +184,46 @@
                     window.Telegram.WebApp.close();
                 }, 2000);
             }
+        }
+
+        // Обработка выбора файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(this.files);
+            selectedFiles = [...selectedFiles, ...files];
+            updateFileList();
+        });
+        
+        // Обновление списка файлов
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    ${file.name} (${formatFileSize(file.size)})
+                    <button type="button" onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
+                        ✕
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+        
+        // Удаление файла
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+        
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         // Обработка отправки формы
@@ -191,6 +246,7 @@
             
             try {
                 const formData = new FormData(this);
+                const problemTheme = formData.get('problem_theme'); // Получаем тему проблемы
                 
                 // Формируем единое описание из всех полей
                 const description = buildDescription(formData);
@@ -203,13 +259,14 @@
                 apiFormData.append('user_email', userData.user_email || '');
                 apiFormData.append('service', 'SM Jeans Mobile App Supplier');
                 apiFormData.append('appeal_type', 'INC');
-                apiFormData.append('theme', problem_theme);
+                apiFormData.append('theme', problemTheme);
                 apiFormData.append('description', description);
                 
-                // Добавляем файл, если есть
-                const fileInput = document.getElementById('fileInput');
-                if (fileInput.files.length > 0) {
-                    apiFormData.append('attachments', fileInput.files[0]);
+                // Добавляем файлы, если есть
+                if (selectedFiles.length > 0) {
+                    selectedFiles.forEach(file => {
+                        apiFormData.append('attachments', file);
+                    });
                 }
                 
                 console.log('Отправляемые данные:');
@@ -253,7 +310,7 @@
                 // Отправляем данные обратно в бот
                 sendDataToBot({
                     ticket_id: ticketId,
-                    form_type: 'Проблема Jeans',
+                    form_type: 'Другая проблема',
                     status: 'success',
                     message: `Обращение создано! Номер: ${ticketId}`,
                     api_response: result
@@ -273,21 +330,11 @@
                 // Отправляем данные об ошибке в бот
                 sendDataToBot({
                     ticket_id: null,
-                    form_type: 'Проблема Jeans',
+                    form_type: 'Другая проблема',
                     status: 'error',
                     message: error.message,
                     error: error.toString()
                 });
-            }
-        });
-
-        // Обработка файлов
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const fileNameDiv = document.getElementById('fileName');
-            if (this.files.length > 0) {
-                fileNameDiv.innerHTML = `Выбран файл: ${this.files[0].name}`;
-            } else {
-                fileNameDiv.innerHTML = '';
             }
         });
 
