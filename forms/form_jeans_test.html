@@ -204,7 +204,7 @@ document.getElementById('jeansForm').addEventListener('submit', function(e) {
         },
         file_count: selectedFiles.length,
         file_names: selectedFiles.map(f => f.name),
-        files: fileInput.files[0]
+        files: formData.get('files')
     };
     
     console.log('Отправляемые данные:', data);
