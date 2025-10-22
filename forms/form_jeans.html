@@ -19,6 +19,7 @@
         .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
         .file-list { margin-top: 10px; }
         .file-item { background: #f8f9fa; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .file-size-warning { color: #dc3545; font-size: 14px; margin-top: 5px; }
         .loading { display: none; text-align: center; }
         .success { display: none; text-align: center; color: #28a745; }
         .error { display: none; text-align: center; color: #dc3545; }
@@ -31,7 +32,7 @@
         <form id="jeansForm">
             <div class="form-group">
                 <label>Описание проблемы *</label>
-                <textarea name="problem_description" required placeholder="Опишите суть проблемы..." minleght="3"></textarea>
+                <textarea name="problem_description" required placeholder="Опишите суть проблемы..." minlength="3"></textarea>
             </div>
 
             <div class="form-group">
@@ -48,12 +49,13 @@
                     📎 Прикрепить файл
                 </button>
                 <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf" multiple>
+                <div class="file-size-warning">Максимальный общий размер файлов: 15 МБ</div>
                 <div id="fileList" class="file-list"></div>
             </div>
 
             <div class="form-group">
                 <label>Логин ТПД *</label>
-                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин" minleght="3">
+                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин" minlength="3">
             </div>
 
             <div class="form-group">
@@ -63,12 +65,12 @@
 
             <div class="form-group">
                 <label>Версия устройства</label>
-                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15" minleght="3">
+                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15" minlength="3">
             </div>
 
             <div class="form-group">
-                <label>В каком приложени возникает проблема? *</label>
-                <select name="app_type" required>
+                <label>В каком приложении возникает проблема? *</label>
+                <select name="app_type" id="app_type" required>
                     <option value="Jeans">Jeans</option>
                     <option value="JedAI">JedAI</option>
                     <option value="All">Jeans и JedAI</option>
@@ -77,7 +79,7 @@
 
             <div class="form-group">
                 <label>Версия Jeans/Версия JedAI</label>
-                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1" minleght="3">
+                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1" minlength="3">
             </div>
 
             <div class="form-group">
@@ -87,12 +89,12 @@
 
             <div class="form-group">
                 <label>Проблема воспроизводится всегда или только сейчас? *</label>
-                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически" minleght="3">
+                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически" minlength="3">
             </div>
 
             <div class="form-group">
                 <label>Подробно опишите шаги для воспроизведения *</label>
-                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..." minleght="3"></textarea>
+                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..." minlength="3"></textarea>
             </div>
 
             <input type="hidden" name="form_type" value="Проблема Jeans">
@@ -132,14 +134,98 @@
             }
         }
 
+        // Максимальный размер файлов (15 МБ)
+        const MAX_FILE_SIZE = 15 * 1024 * 1024;
+        let selectedFiles = [];
+        let totalFileSize = 0;
+
+        // Функция для проверки размера файлов
+        function checkFileSize(files) {
+            const newTotalSize = totalFileSize + Array.from(files).reduce((sum, file) => sum + file.size, 0);
+            return newTotalSize <= MAX_FILE_SIZE;
+        }
+
+        // Функция для получения общего размера файлов
+        function getTotalFileSize() {
+            return selectedFiles.reduce((sum, file) => sum + file.size, 0);
+        }
+
+        // Функция для форматирования размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Функция для обновления отображения списка файлов
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    ${file.name} (${formatFileSize(file.size)})
+                    <button type="button" onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
+                        ✕
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+
+            // Показываем общий размер файлов
+            const totalSize = getTotalFileSize();
+            const sizeInfo = document.createElement('div');
+            sizeInfo.className = 'file-size-warning';
+            sizeInfo.textContent = `Общий размер: ${formatFileSize(totalSize)} / ${formatFileSize(MAX_FILE_SIZE)}`;
+            if (totalSize > MAX_FILE_SIZE) {
+                sizeInfo.style.color = '#dc3545';
+            } else {
+                sizeInfo.style.color = '#28a745';
+            }
+            fileList.appendChild(sizeInfo);
+        }
+
+        // Функция для удаления файла
+        function removeFile(index) {
+            totalFileSize -= selectedFiles[index].size;
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        // Обработчик выбора файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(this.files);
+            
+            // Проверяем общий размер файлов
+            if (!checkFileSize(files)) {
+                alert(`Превышен максимальный размер файлов (15 МБ). Текущий размер: ${formatFileSize(getTotalFileSize())}`);
+                this.value = '';
+                return;
+            }
+
+            // Добавляем файлы
+            selectedFiles = [...selectedFiles, ...files];
+            totalFileSize = getTotalFileSize();
+            updateFileList();
+            this.value = '';
+        });
+
         // Функция для формирования единого описания из всех полей
         function buildDescription(formData) {
+            const appTypeSelect = document.getElementById('app_type');
+            const appType = appTypeSelect ? appTypeSelect.value : 'Не указано';
+
             const fields = {
                 'Описание проблемы': formData.get('problem_description'),
                 'Область проблемы': formData.get('problem_scope'),
                 'Логин ТПД': formData.get('tpd_login'),
                 'ID ТТ': formData.get('tt_id'),
                 'Версия устройства': formData.get('device_version'),
+                'Тип приложения': appType,
                 'Версия приложения': formData.get('app_version'),
                 'Дата и время проблемы': formData.get('problem_date'),
                 'Воспроизводимость': formData.get('reproducibility'),
@@ -201,6 +287,12 @@
             const errorMessage = document.getElementById('errorMessage');
             const form = document.getElementById('jeansForm');
             
+            // Проверяем размер файлов перед отправкой
+            if (getTotalFileSize() > MAX_FILE_SIZE) {
+                alert(`Общий размер файлов превышает 15 МБ. Пожалуйста, уменьшите размер файлов.`);
+                return;
+            }
+            
             // Показываем загрузку
             submitBtn.style.display = 'none';
             form.style.display = 'none';
@@ -210,6 +302,8 @@
             
             try {
                 const formData = new FormData(this);
+                const appTypeSelect = document.getElementById('app_type');
+                const appType = appTypeSelect ? appTypeSelect.value : 'Jeans';
                 
                 // Формируем единое описание из всех полей
                 const description = buildDescription(formData);
@@ -220,13 +314,12 @@
                 // Обязательные параметры для API
                 apiFormData.append('user_tg_id', userData.user_tg_id || '');
                 apiFormData.append('user_email', userData.user_email || '');
-                apiFormData.append('service', formData.app_type);
+                apiFormData.append('service', appType); // Исправлено: используем значение из select
                 apiFormData.append('appeal_type', 'INC');
                 apiFormData.append('theme', 'Обращение о проблемах в работе приложения Jeans/Jedai');
                 apiFormData.append('description', description);
                 
                 // Добавляем файл, если есть
-                const fileInput = document.getElementById('fileInput');
                 if (selectedFiles.length > 0) {
                     selectedFiles.forEach(file => {
                         apiFormData.append('attachments', file);
@@ -301,44 +394,6 @@
                 });
             }
         });
-        let selectedFiles = [];
-
-        // Функции для работы с файлами
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const files = Array.from(this.files);
-            selectedFiles = [...selectedFiles, ...files];
-            updateFileList();
-        });
-
-        function updateFileList() {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '';
-            
-            selectedFiles.forEach((file, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.innerHTML = `
-                    ${file.name} (${formatFileSize(file.size)})
-                    <button type="button" onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
-                        ✕
-                    </button>
-                `;
-                fileList.appendChild(fileItem);
-            });
-        }
-
-        function removeFile(index) {
-            selectedFiles.splice(index, 1);
-            updateFileList();
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
 
         // Устанавливаем текущую дату и время по умолчанию
         const now = new Date();
