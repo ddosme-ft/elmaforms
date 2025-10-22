@@ -17,6 +17,8 @@
         .btn:disabled { background: #6c757d; cursor: not-allowed; }
         .file-input { display: none; }
         .file-btn { background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .file-list { margin-top: 10px; }
+        .file-item { background: #f8f9fa; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }
         .loading { display: none; text-align: center; }
         .success { display: none; text-align: center; color: #28a745; }
         .error { display: none; text-align: center; color: #dc3545; }
@@ -29,13 +31,12 @@
         <form id="jeansForm">
             <div class="form-group">
                 <label>Описание проблемы *</label>
-                <textarea name="problem_description" required placeholder="Опишите суть проблемы..."></textarea>
+                <textarea name="problem_description" required placeholder="Опишите суть проблемы..." minleght="3"></textarea>
             </div>
 
             <div class="form-group">
                 <label>Проблема только у вас или массовая? *</label>
                 <select name="problem_scope" required>
-                    <option value="">Выберите вариант</option>
                     <option value="у меня">Только у меня</option>
                     <option value="массовая">Массовая проблема</option>
                 </select>
@@ -46,28 +47,37 @@
                 <button type="button" class="file-btn" onclick="document.getElementById('fileInput').click()">
                     📎 Прикрепить файл
                 </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf">
-                <div id="fileName"></div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*,video/*,.pdf" multiple>
+                <div id="fileList" class="file-list"></div>
             </div>
 
             <div class="form-group">
                 <label>Логин ТПД *</label>
-                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин">
+                <input type="text" name="tpd_login" required value="" placeholder="Ваш логин" minleght="3">
             </div>
 
             <div class="form-group">
                 <label>ID ТТ, где была обнаружена проблема *</label>
-                <input type="text" name="tt_id" required placeholder="Введите ID торговой точки">
+                <input type="text" name="tt_id" required pattern="^(?=.*\d.*\d.*\d)[\d ,]+$" placeholder="Введите ID торговой точки">
             </div>
 
             <div class="form-group">
                 <label>Версия устройства</label>
-                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15">
+                <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15" minleght="3">
+            </div>
+
+            <div class="form-group">
+                <label>В каком приложени возникает проблема? *</label>
+                <select name="app_type" required>
+                    <option value="Jeans">Jeans</option>
+                    <option value="JedAI">JedAI</option>
+                    <option value="All">Jeans и JedAI</option>
+                </select>
             </div>
 
             <div class="form-group">
                 <label>Версия Jeans/Версия JedAI</label>
-                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1">
+                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1" minleght="3">
             </div>
 
             <div class="form-group">
@@ -77,12 +87,12 @@
 
             <div class="form-group">
                 <label>Проблема воспроизводится всегда или только сейчас? *</label>
-                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически">
+                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически" minleght="3">
             </div>
 
             <div class="form-group">
                 <label>Подробно опишите шаги для воспроизведения *</label>
-                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
+                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..." minleght="3"></textarea>
             </div>
 
             <input type="hidden" name="form_type" value="Проблема Jeans">
@@ -210,15 +220,17 @@
                 // Обязательные параметры для API
                 apiFormData.append('user_tg_id', userData.user_tg_id || '');
                 apiFormData.append('user_email', userData.user_email || '');
-                apiFormData.append('service', 'SM Jeans Mobile App Supplier');
+                apiFormData.append('service', formData.app_type);
                 apiFormData.append('appeal_type', 'INC');
                 apiFormData.append('theme', 'Обращение о проблемах в работе приложения Jeans/Jedai');
                 apiFormData.append('description', description);
                 
                 // Добавляем файл, если есть
                 const fileInput = document.getElementById('fileInput');
-                if (fileInput.files.length > 0) {
-                    apiFormData.append('attachments', fileInput.files[0]);
+                if (selectedFiles.length > 0) {
+                    selectedFiles.forEach(file => {
+                        apiFormData.append('attachments', file);
+                    });
                 }
                 
                 console.log('Отправляемые данные:');
@@ -289,16 +301,44 @@
                 });
             }
         });
+        let selectedFiles = [];
 
-        // Обработка файлов
+        // Функции для работы с файлами
         document.getElementById('fileInput').addEventListener('change', function(e) {
-            const fileNameDiv = document.getElementById('fileName');
-            if (this.files.length > 0) {
-                fileNameDiv.innerHTML = `Выбран файл: ${this.files[0].name}`;
-            } else {
-                fileNameDiv.innerHTML = '';
-            }
+            const files = Array.from(this.files);
+            selectedFiles = [...selectedFiles, ...files];
+            updateFileList();
         });
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    ${file.name} (${formatFileSize(file.size)})
+                    <button type="button" onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
+                        ✕
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
 
         // Устанавливаем текущую дату и время по умолчанию
         const now = new Date();
