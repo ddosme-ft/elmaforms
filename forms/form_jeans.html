@@ -27,9 +27,14 @@
 </head>
 <body>
     <div class="container">
-        <h2>📱 Проблема Jeans</h2>
+        <h2>📱 Проблема Jeans/JedAI</h2>
         
         <form id="jeansForm">
+            <div class="form-group">
+                <label>Тема обращения</label>
+                <input type="text" name="theme_form" id="theme_form" placeholder="Тема">
+            </div>
+            
             <div class="form-group">
                 <label>Описание проблемы *</label>
                 <textarea name="problem_description" required placeholder="Опишите суть проблемы..." minlength="3"></textarea>
@@ -71,9 +76,9 @@
             <div class="form-group">
                 <label>В каком приложении возникает проблема? *</label>
                 <select name="app_type" id="app_type" required>
-                    <option value="Jeans">Jeans</option>
-                    <option value="JedAI">JedAI</option>
-                    <option value="All">Jeans и JedAI</option>
+                    <option value="SM Jeans Mobile App Supplier">Jeans</option>
+                    <option value="SM Jeans Mobile App Supplier">JedAI</option>
+                    <option value="SM Jeans Mobile App Supplier">Jeans и JedAI</option>
                 </select>
             </div>
 
@@ -304,6 +309,8 @@
                 const formData = new FormData(this);
                 const appTypeSelect = document.getElementById('app_type');
                 const appType = appTypeSelect ? appTypeSelect.value : 'Jeans';
+                const themeForm = document.getElementById('theme_form');
+                const themeValue = themeForm ? themeForm.value : 'Обращение о проблемах в работе приложения Jeans/Jedai';
                 
                 // Формируем единое описание из всех полей
                 const description = buildDescription(formData);
@@ -402,3 +409,4 @@
     </script>
 </body>
 </html>
+
