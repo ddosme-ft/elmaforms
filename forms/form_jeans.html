@@ -102,9 +102,13 @@
 
             <div class="form-group">
                 <label>Проблема воспроизводится всегда или только сейчас? *</label>
-                <input type="text" name="reproducibility" required placeholder="Например: всегда, только сейчас, периодически" minlength="3">
+                <select name="reproducibility" required>
+                    <option value="Всегда">Всегда</option>
+                    <option value="Только сейчас">Только сейчас</option>
+                    <option value="Периодически">Периодически</option>
+                </select>
             </div>
-
+            
             <div class="form-group">
                 <label>Подробно опишите шаги для воспроизведения *</label>
                 <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..." minlength="3"></textarea>
@@ -319,9 +323,9 @@
             try {
                 const formData = new FormData(this);
                 const appTypeSelect = document.getElementById('app_type');
-                const appType = appTypeSelect ? appTypeSelect.value : 'Jeans';
+                const appType = appTypeSelect ? appTypeSelect.value : '';
                 const themeForm = document.getElementById('theme_form');
-                const themeValue = themeForm ? themeForm.value : 'Обращение о проблемах в работе приложения Jeans/Jedai';
+                const themeValue = themeForm ? themeForm.value : 'Обращение о проблемах в работе мобильного приложения';
                 
                 // Формируем единое описание из всех полей
                 const description = buildDescription(formData);
@@ -386,6 +390,7 @@
                 sendDataToBot({
                     ticket_id: ticketId,
                     form_type: 'Проблема Jeans',
+                    theme: themeValue,
                     status: 'success',
                     message: `Обращение создано! Номер: ${ticketId}`,
                     api_response: result
@@ -406,6 +411,7 @@
                 sendDataToBot({
                     ticket_id: null,
                     form_type: 'Проблема Jeans',
+                    theme: themeValue,
                     status: 'error',
                     message: error.message,
                     error: error.toString()
@@ -420,6 +426,7 @@
     </script>
 </body>
 </html>
+
 
 
 
