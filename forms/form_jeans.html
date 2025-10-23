@@ -114,7 +114,7 @@
                 <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..." minlength="3"></textarea>
             </div>
 
-            <input type="hidden" name="form_type" value="Проблема Jeans">
+            <input type="hidden" name="form_type" value="Проблема приложения">
             
             <!-- Состояния формы -->
             <div class="loading" id="loading">
@@ -399,7 +399,7 @@
                 // Отправляем данные обратно в бот
                 sendDataToBot({
                     ticket_id: ticketId,
-                    form_type: 'Проблема Jeans',
+                    form_type: 'Проблема приложения',
                     theme: themeValue,
                     status: 'success',
                     message: `Обращение создано! Номер: ${ticketId}`,
@@ -420,7 +420,7 @@
                 // Отправляем данные об ошибке в бот
                 sendDataToBot({
                     ticket_id: null,
-                    form_type: 'Проблема Jeans',
+                    form_type: 'Проблема приложения',
                     theme: themeValue,
                     status: 'error',
                     message: error.message,
@@ -436,6 +436,7 @@
     </script>
 </body>
 </html>
+
 
 
 
