@@ -22,7 +22,7 @@
         .required::after { content: " *"; color: red; }
         .loading { display: none; text-align: center; }
         .success { display: none; text-align: center; color: #28a745; }
-        .error { display: none; text-align: center; color: #dc3545; }
+        .errorcl { display: none; text-align: center; color: #dc3545; }
     </style>
 </head>
 <body>
@@ -104,7 +104,7 @@
                 <p>Закрытие формы...</p>
             </div>
             
-            <div class="error" id="error">
+            <div class="errorcl" id="errorcl">
                 <p>❌ Ошибка при создании обращения</p>
                 <p id="errorMessage"></p>
                 <button type="button" class="btn" onclick="resetForm()">Попробовать снова</button>
@@ -154,15 +154,15 @@
         function resetForm() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('success').style.display = 'none';
-            document.getElementById('error').style.display = 'none';
+            document.getElementById('errorcl').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'block';
             document.getElementById('otherForm').style.display = 'block';
 
             if (loading) loading.style.display = 'none';
             if (success) success.style.display = 'none';
-            if (error) error.style.display = 'none';
+            if (errorcl) errorcl.style.display = 'none';
             if (submitBtn) submitBtn.style.display = 'block';
-            if (form) form.style.display = 'block';
+            if (otherForm) form.style.display = 'block';
         }
 
         // Функция отправки данных обратно в бот
@@ -280,7 +280,7 @@
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
             const success = document.getElementById('success');
-            const error = document.getElementById('error');
+            const errorcl = document.getElementById('errorcl');
             const errorMessage = document.getElementById('errorMessage');
             const form = document.getElementById('otherForm');
 
@@ -294,7 +294,7 @@
             submitBtn.style.display = 'none';
             form.style.display = 'none';
             loading.style.display = 'block';
-            error.style.display = 'none';
+            errorcl.style.display = 'none';
             success.style.display = 'none';
             
             try {
@@ -378,7 +378,7 @@
                 
                 // ОШИБКА: показываем ошибку
                 loading.style.display = 'none';
-                error.style.display = 'block';
+                errorcl.style.display = 'block';
                 errorMessage.textContent = error.message;
                 
                 // Отправляем данные об ошибке в бот
@@ -400,3 +400,4 @@
     </script>
 </body>
 </html>
+
