@@ -69,6 +69,14 @@
             </div>
 
             <div class="form-group">
+                <label>Тип устройства *</label>
+                <select name="device_type" id="device_type" required>
+                    <option value="Android">Android</option>
+                    <option value="iOS">iOS</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label>Версия устройства</label>
                 <input type="text" name="device_version" placeholder="Например: Android 12, iOS 15" minlength="3">
             </div>
@@ -223,12 +231,15 @@
         function buildDescription(formData) {
             const appTypeSelect = document.getElementById('app_type');
             const appType = appTypeSelect ? appTypeSelect.value : 'Не указано';
+            const deviceTypeSelect = document.getElementById('device_type');
+            const deviceType = deviceTypeSelect ? deviceTypeSelect.value : 'Не указано';
 
             const fields = {
                 'Описание проблемы': formData.get('problem_description'),
                 'Область проблемы': formData.get('problem_scope'),
                 'Логин ТПД': formData.get('tpd_login'),
                 'ID ТТ': formData.get('tt_id'),
+                'Тип устройства': deviceType,
                 'Версия устройства': formData.get('device_version'),
                 'Тип приложения': appType,
                 'Версия приложения': formData.get('app_version'),
@@ -323,7 +334,7 @@
                 apiFormData.append('user_email', userData.user_email || '');
                 apiFormData.append('service', appType); // Исправлено: используем значение из select
                 apiFormData.append('appeal_type', 'INC');
-                apiFormData.append('theme', 'Обращение о проблемах в работе приложения Jeans/Jedai');
+                apiFormData.append('theme', themeValue);
                 apiFormData.append('description', description);
                 
                 // Добавляем файл, если есть
@@ -409,4 +420,5 @@
     </script>
 </body>
 </html>
+
 
