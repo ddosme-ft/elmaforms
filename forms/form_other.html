@@ -32,12 +32,12 @@
         <form id="otherForm">
             <div class="form-group">
                 <label class="required">Тема проблемы</label>
-                <input type="text" name="problem_theme" required placeholder="Кратко опишите тему проблемы...">
+                <input type="text" name="problem_theme" required placeholder="Кратко опишите тему проблемы..." minleght="3">
             </div>
 
             <div class="form-group">
                 <label class="required">Описание проблемы</label>
-                <textarea name="problem_description" required placeholder="Подробно опишите суть проблемы..."></textarea>
+                <textarea name="problem_description" required placeholder="Подробно опишите суть проблемы..." minleght="3"></textarea>
             </div>
 
             <div class="form-group">
@@ -75,7 +75,7 @@
 
             <div class="form-group">
                 <label class="required">Подробно опишите шаги для воспроизведения</label>
-                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..."></textarea>
+                <textarea name="steps_to_reproduce" required placeholder="Пошагово опишите ваши действия..." minleght="3"></textarea>
             </div>
 
             <div class="form-group">
@@ -127,13 +127,10 @@
                 console.error('Error parsing user data:', e);
             }
         }
-
-        let selectedFiles = [];
         
         // Функция для формирования описания
         function buildDescription(formData) {
             const fields = {
-                'Тема проблемы': formData.get('problem_theme'),
                 'Описание проблемы': formData.get('problem_description'),
                 'Тип проблемы': formData.get('problem_type'),
                 'Система/приложение': formData.get('system_name'),
@@ -186,14 +183,32 @@
             }
         }
 
-        // Обработка выбора файлов
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const files = Array.from(this.files);
-            selectedFiles = [...selectedFiles, ...files];
-            updateFileList();
-        });
-        
-        // Обновление списка файлов
+        // Максимальный размер файлов (15 МБ)
+        const MAX_FILE_SIZE = 15 * 1024 * 1024;
+        let selectedFiles = [];
+        let totalFileSize = 0;
+
+        // Функция для проверки размера файлов
+        function checkFileSize(files) {
+            const newTotalSize = totalFileSize + Array.from(files).reduce((sum, file) => sum + file.size, 0);
+            return newTotalSize <= MAX_FILE_SIZE;
+        }
+
+        // Функция для получения общего размера файлов
+        function getTotalFileSize() {
+            return selectedFiles.reduce((sum, file) => sum + file.size, 0);
+        }
+
+        // Функция для форматирования размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Функция для обновления отображения списка файлов
         function updateFileList() {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
@@ -209,21 +224,47 @@
                 `;
                 fileList.appendChild(fileItem);
             });
+
+            // Показываем общий размер файлов
+            const totalSize = getTotalFileSize();
+            const sizeInfo = document.createElement('div');
+            sizeInfo.className = 'file-size-warning';
+            sizeInfo.textContent = `Общий размер: ${formatFileSize(totalSize)} / ${formatFileSize(MAX_FILE_SIZE)}`;
+            if (totalSize > MAX_FILE_SIZE) {
+                sizeInfo.style.color = '#dc3545';
+            } else {
+                sizeInfo.style.color = '#28a745';
+            }
+            fileList.appendChild(sizeInfo);
         }
-        
-        // Удаление файла
+
+        // Функция для удаления файла
         function removeFile(index) {
+            totalFileSize -= selectedFiles[index].size;
             selectedFiles.splice(index, 1);
             updateFileList();
         }
+
+        // Обработчик выбора файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(this.files);
+            
+            // Проверяем общий размер файлов
+            if (!checkFileSize(files)) {
+                alert(`Превышен максимальный размер файлов (15 МБ). Текущий размер: ${formatFileSize(getTotalFileSize())}`);
+                this.value = '';
+                return;
+            }
+
+            // Добавляем файлы
+            selectedFiles = [...selectedFiles, ...files];
+            totalFileSize = getTotalFileSize();
+            updateFileList();
+            this.value = '';
+        });
         
-        // Форматирование размера файла
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        function getSelectedOptionText(selectElement) {
+            return selectElement.options[selectElement.selectedIndex].text;
         }
 
         // Обработка отправки формы
@@ -236,7 +277,13 @@
             const error = document.getElementById('error');
             const errorMessage = document.getElementById('errorMessage');
             const form = document.getElementById('otherForm');
-            
+
+            // Проверяем размер файлов перед отправкой
+            if (getTotalFileSize() > MAX_FILE_SIZE) {
+                alert(`Общий размер файлов превышает 15 МБ. Пожалуйста, уменьшите размер файлов.`);
+                return;
+            }
+
             // Показываем загрузку
             submitBtn.style.display = 'none';
             form.style.display = 'none';
@@ -312,6 +359,7 @@
                     ticket_id: ticketId,
                     form_type: 'Другая проблема',
                     status: 'success',
+                    theme: problemTheme,
                     message: `Обращение создано! Номер: ${ticketId}`,
                     api_response: result
                 });
@@ -332,6 +380,7 @@
                     ticket_id: null,
                     form_type: 'Другая проблема',
                     status: 'error',
+                    theme: problemTheme,
                     message: error.message,
                     error: error.toString()
                 });
