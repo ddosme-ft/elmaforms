@@ -85,14 +85,14 @@
                 <label>В каком приложении возникает проблема? *</label>
                 <select name="app_type" id="app_type" required>
                     <option value="SM Jeans Mobile App Supplier">SalesPro</option>
-                    //<option value="SM Jeans Mobile App Supplier">Jeans</option>
                     <option value="SM Jeans Mobile App Supplier">JedAI</option>
+                    <option value="SM Jeans Mobile App Supplier">Jeans</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label>Версия приложения</label>
-                <input type="text" name="app_version" placeholder="Например: Jeans 2.5.1" minlength="3">
+                <input type="text" name="app_version" placeholder="Например: 2.5.1" minlength="3">
             </div>
 
             <div class="form-group">
@@ -241,7 +241,7 @@
                 'ID ТТ': formData.get('tt_id'),
                 'Тип устройства': deviceType,
                 'Версия устройства': formData.get('device_version'),
-                'Тип приложения': appType,
+                'Тип приложения': appTypeSelect,
                 'Версия приложения': formData.get('app_version'),
                 'Дата и время проблемы': formData.get('problem_date'),
                 'Воспроизводимость': formData.get('reproducibility'),
@@ -420,6 +420,7 @@
     </script>
 </body>
 </html>
+
 
 
 
