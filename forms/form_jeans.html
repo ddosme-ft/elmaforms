@@ -22,7 +22,7 @@
         .file-size-warning { color: #dc3545; font-size: 14px; margin-top: 5px; }
         .loading { display: none; text-align: center; }
         .success { display: none; text-align: center; color: #28a745; }
-        .error { display: none; text-align: center; color: #dc3545; }
+        .errorcl { display: none; text-align: center; color: #dc3545; }
     </style>
 </head>
 <body>
@@ -126,7 +126,7 @@
                 <p>Закрытие формы...</p>
             </div>
             
-            <div class="error" id="error">
+            <div class="errorcl" id="errorcl">
                 <p>❌ Ошибка при создании обращения</p>
                 <p id="errorMessage"></p>
                 <button type="button" class="btn" onclick="resetForm()">Попробовать снова</button>
@@ -270,7 +270,7 @@
         function resetForm() {
             const loading = document.getElementById('loading');
             const success = document.getElementById('success');
-            const error = document.getElementById('error');
+            const errorcl = document.getElementById('errorcl');
             const submitBtn = document.getElementById('submitBtn');
             const form = document.getElementById('jeansForm');
             
@@ -313,7 +313,7 @@
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
             const success = document.getElementById('success');
-            const error = document.getElementById('error');
+            const errorcl = document.getElementById('errorcl');
             const errorMessage = document.getElementById('errorMessage');
             const form = document.getElementById('jeansForm');
             
@@ -327,7 +327,7 @@
             submitBtn.style.display = 'none';
             form.style.display = 'none';
             loading.style.display = 'block';
-            error.style.display = 'none';
+            errorcl.style.display = 'none';
             success.style.display = 'none';
             
             try {
@@ -414,7 +414,7 @@
                 
                 // ОШИБКА: показываем ошибку
                 loading.style.display = 'none';
-                error.style.display = 'block';
+                errorcl.style.display = 'block';
                 errorMessage.textContent = error.message;
                 
                 // Отправляем данные об ошибке в бот
@@ -436,6 +436,7 @@
     </script>
 </body>
 </html>
+
 
 
 
