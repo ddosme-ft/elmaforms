@@ -230,6 +230,10 @@
             updateFileList();
             this.value = '';
         });
+        
+        function getSelectedOptionText(selectElement) {
+            return selectElement.options[selectElement.selectedIndex].text;
+        }
 
         // Функция для формирования единого описания из всех полей
         function buildDescription(formData) {
@@ -264,11 +268,17 @@
 
         // Функция сброса формы после ошибки
         function resetForm() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('success').style.display = 'none';
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('submitBtn').style.display = 'block';
-            document.getElementById('jeansForm').style.display = 'block';
+            const loading = document.getElementById('loading');
+            const success = document.getElementById('success');
+            const error = document.getElementById('error');
+            const submitBtn = document.getElementById('submitBtn');
+            const form = document.getElementById('jeansForm');
+            
+            if (loading) loading.style.display = 'none';
+            if (success) success.style.display = 'none';
+            if (error) error.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'block';
+            if (form) form.style.display = 'block';
         }
 
         // Функция отправки данных обратно в бот
@@ -426,6 +436,7 @@
     </script>
 </body>
 </html>
+
 
 
 
