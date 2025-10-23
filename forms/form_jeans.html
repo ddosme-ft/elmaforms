@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Проблема приложения</title>
+    <title>Форма заявки на поддержку</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
@@ -230,9 +230,9 @@
         // Функция для формирования единого описания из всех полей
         function buildDescription(formData) {
             const appTypeSelect = document.getElementById('app_type');
-            const appType = appTypeSelect ? appTypeSelect.option : 'Не указано';
+            const appType = appTypeSelect ? getSelectedOptionText(appTypeSelect) : 'Не указано';
             const deviceTypeSelect = document.getElementById('device_type');
-            const deviceType = deviceTypeSelect ? deviceTypeSelect.value : 'Не указано';
+            const appTypeText = deviceTypeSelect ? deviceTypeSelect.value : 'Не указано';
 
             const fields = {
                 'Описание проблемы': formData.get('problem_description'),
@@ -241,7 +241,7 @@
                 'ID ТТ': formData.get('tt_id'),
                 'Тип устройства': deviceType,
                 'Версия устройства': formData.get('device_version'),
-                'Тип приложения': appType,
+                'Тип приложения': appTypeText,
                 'Версия приложения': formData.get('app_version'),
                 'Дата и время проблемы': formData.get('problem_date'),
                 'Воспроизводимость': formData.get('reproducibility'),
@@ -420,6 +420,7 @@
     </script>
 </body>
 </html>
+
 
 
 
