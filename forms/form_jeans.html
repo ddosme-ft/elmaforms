@@ -234,9 +234,9 @@
         // Функция для формирования единого описания из всех полей
         function buildDescription(formData) {
             const appTypeSelect = document.getElementById('app_type');
-            const appType = appTypeSelect ? getSelectedOptionText(appTypeSelect) : 'Не указано';
+            const appTypeText = appTypeSelect ? getSelectedOptionText(appTypeSelect) : 'Не указано';
             const deviceTypeSelect = document.getElementById('device_type');
-            const appTypeText = deviceTypeSelect ? deviceTypeSelect.value : 'Не указано';
+            const deviceType = deviceTypeSelect ? deviceTypeSelect.value : 'Не указано';
 
             const fields = {
                 'Описание проблемы': formData.get('problem_description'),
@@ -426,6 +426,7 @@
     </script>
 </body>
 </html>
+
 
 
 
