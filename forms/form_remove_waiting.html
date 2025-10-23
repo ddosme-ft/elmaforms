@@ -297,7 +297,6 @@
                 closeWebApp();
                 
             } catch (error) {
-                const result = await response.text()
                 console.error('Error:', error);
                 
                 // ОШИБКА: показываем ошибку
@@ -310,7 +309,7 @@
                     ticket_id: ticketId,
                     form_type: 'Снятие с ожидания',
                     status: 'error',
-                    message: error.message=+ result,
+                    message: error.message,
                     error: error.toString()
                 });
             }
@@ -318,6 +317,7 @@
     </script>
 </body>
 </html>
+
 
 
 
