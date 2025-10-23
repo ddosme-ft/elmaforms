@@ -157,6 +157,12 @@
             document.getElementById('error').style.display = 'none';
             document.getElementById('submitBtn').style.display = 'block';
             document.getElementById('otherForm').style.display = 'block';
+
+            if (loading) loading.style.display = 'none';
+            if (success) success.style.display = 'none';
+            if (error) error.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'block';
+            if (form) form.style.display = 'block';
         }
 
         // Функция отправки данных обратно в бот
