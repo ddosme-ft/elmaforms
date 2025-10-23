@@ -309,7 +309,7 @@
                     ticket_id: ticketId,
                     form_type: 'Снятие с ожидания',
                     status: 'error',
-                    message: error.message,
+                    message: error.message=+ result,
                     error: error.toString()
                 });
             }
@@ -317,5 +317,6 @@
     </script>
 </body>
 </html>
+
 
 
