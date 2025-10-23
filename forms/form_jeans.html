@@ -43,8 +43,8 @@
             <div class="form-group">
                 <label>Проблема только у вас или массовая? *</label>
                 <select name="problem_scope" required>
-                    <option value="у меня">Только у меня</option>
-                    <option value="массовая">Массовая проблема</option>
+                    <option value="Только у меня">Только у меня</option>
+                    <option value="Массовая проблема">Массовая проблема</option>
                 </select>
             </div>
 
@@ -102,7 +102,7 @@
 
             <div class="form-group">
                 <label>Проблема воспроизводится всегда или только сейчас? *</label>
-                <select name="reproducibility" required>
+                <select name="reproducibility" id="reproducibility" required>
                     <option value="Всегда">Всегда</option>
                     <option value="Только сейчас">Только сейчас</option>
                     <option value="Периодически">Периодически</option>
@@ -233,8 +233,8 @@
 
         // Функция для формирования единого описания из всех полей
         function buildDescription(formData) {
-            //const appTypeSelect = document.getElementById('app_type');
-            //const appTypeText = appTypeSelect ? getSelectedOptionText(appTypeSelect) : 'Не указано';
+            const appTypeSelect = document.getElementById('app_type');
+            const appTypeText = appTypeSelect ? getSelectedOptionText(appTypeSelect) : 'Не указано';
             const deviceTypeSelect = document.getElementById('device_type');
             const deviceType = deviceTypeSelect ? deviceTypeSelect.value : 'Не указано';
 
@@ -245,7 +245,7 @@
                 'ID ТТ': formData.get('tt_id'),
                 'Тип устройства': deviceType,
                 'Версия устройства': formData.get('device_version'),
-                'Тип приложения': document.getElementById('app_type'),
+                'Тип приложения': appTypeText,
                 'Версия приложения': formData.get('app_version'),
                 'Дата и время проблемы': formData.get('problem_date'),
                 'Воспроизводимость': formData.get('reproducibility'),
@@ -426,6 +426,7 @@
     </script>
 </body>
 </html>
+
 
 
 
