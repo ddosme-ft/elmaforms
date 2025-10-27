@@ -348,7 +348,7 @@
                 apiFormData.append('user_email', userData.user_email || '');
                 apiFormData.append('service', appType); // Исправлено: используем значение из select
                 apiFormData.append('appeal_type', 'INC');
-                apiFormData.append('theme', themeValue);
+                apiFormData.append('theme', themeValue || 'Обращение о проблемах в работе мобильного приложения');
                 apiFormData.append('description', description);
                 
                 // Добавляем файл, если есть
@@ -436,6 +436,7 @@
     </script>
 </body>
 </html>
+
 
 
 
